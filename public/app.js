@@ -159,8 +159,8 @@ function App() {
       {/* Sidebar Navigation */}
       <aside class="chakra-sidebar">
         <div class="chakra-brand">
-          <i class="fa-solid fa-cube"></i>
-          <h1>THẤT NGHIỆP</h1>
+          <img src="/texture/wooden_hoe.png" style={{ width: '28px', height: '28px', imageRendering: 'pixelated' }} alt="Bot Manager Logo" />
+          <h1>Bot Manager</h1>
         </div>
 
         <nav class="chakra-nav-list">
