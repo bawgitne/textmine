@@ -100,7 +100,7 @@ class BotManager {
     }
   }
 
-  // Đăng ký Bot mới từ Modal Pop-up (Role mặc định là AFK Overworld)
+  // Đăng ký Bot mới từ Modal Pop-up (Password mặc định là 1234)
   registerBotAccount(accData) {
     const username = (accData.username || '').trim();
     if (!username) return;
@@ -109,6 +109,7 @@ class BotManager {
     this.bots[botId] = {
       id: botId,
       username: username,
+      password: accData.password || '1234',
       role: 'AFK_OVERWORLD', // 'AFK_OVERWORLD' | 'AFK_NON_OVERWORLD' | 'TIME_MANAGER' | 'BUILDER'
       status: 'OFFLINE',
       assignedLetterId: accData.assignedLetterId || null,
@@ -119,7 +120,7 @@ class BotManager {
       botInstance: null
     };
 
-    this.log('success', `✅ Đã đăng ký thành công Bot [${username}] (Role mặc định: AFK Overworld)!`);
+    this.log('success', `✅ Đã đăng ký thành công Bot [${username}] (Pass: ${accData.password || '1234'})!`);
     this.broadcastState();
   }
 
@@ -151,13 +152,14 @@ class BotManager {
     botState.role = role;
     if (role === 'TIME_MANAGER') {
       this.timeKeeper.username = botState.username;
-      this.log('warning', `⭐ Đã đặt Bot [${botState.username}] làm TIME MANAGER (Quản lý thời gian). Bấm nút Play ▶ để chạy!`);
+      this.timeKeeper.password = botState.password || '1234';
+      this.log('warning', `⭐ Đã đặt Bot [${botState.username}] làm TIME MANAGER. Bấm nút Play ▶ để chạy!`);
     } else if (role === 'BUILDER') {
       this.log('info', `🏗️ Đã đặt Bot [${botState.username}] làm BOT BUILDER. Bấm nút Play ▶ để chạy!`);
     } else if (role === 'AFK_OVERWORLD') {
-      this.log('info', `🛌 Đã đặt Bot [${botState.username}] làm BOT AFK OVERWORLD (Biết đi ngủ ban đêm). Bấm nút Play ▶ để chạy!`);
+      this.log('info', `🛌 Đã đặt Bot [${botState.username}] làm BOT AFK OVERWORLD. Bấm nút Play ▶ để chạy!`);
     } else if (role === 'AFK_NON_OVERWORLD') {
-      this.log('info', `🌌 Đã đặt Bot [${botState.username}] làm BOT AFK THE END/NETHER (Treo máy không ngủ). Bấm nút Play ▶ để chạy!`);
+      this.log('info', `🌌 Đã đặt Bot [${botState.username}] làm BOT AFK THE END/NETHER. Bấm nút Play ▶ để chạy!`);
     }
     this.broadcastState();
   }
@@ -174,11 +176,11 @@ class BotManager {
     } else if (botState.role === 'BUILDER') {
       this.log('info', `▶ [PLAY] Đang khởi động Bot Builder [${botState.username}] vào server...`);
       const letterKey = botState.assignedLetterId || botId;
-      this.startBot(letterKey);
+      this.startBot(letterKey, { username: botState.username, password: botState.password || '1234' });
     } else {
       // Role AFK Overworld hoặc AFK Non-Overworld
       this.log('info', `▶ [PLAY] Đang khởi động Bot AFK [${botState.username}] (${botState.role})...`);
-      this.addAfkBot(botState.username);
+      this.addAfkBot(botState.username, botState.password || '1234');
       botState.status = 'ONLINE';
     }
     this.broadcastState();
@@ -207,8 +209,8 @@ class BotManager {
     this.broadcastState();
   }
 
-  // Thêm Bot AFK với Username tùy chỉnh
-  addAfkBot(username) {
+  // Thêm Bot AFK với Username & Password tùy chỉnh
+  addAfkBot(username, password = '1234') {
     const cleanName = (username || '').trim();
     if (!cleanName) return;
 
@@ -219,6 +221,7 @@ class BotManager {
 
     const afkState = {
       username: cleanName,
+      password: password || '1234',
       status: 'CONNECTING',
       botInstance: null,
       antiAfkInterval: null
@@ -237,9 +240,33 @@ class BotManager {
 
       afkState.botInstance = bot;
 
+      // Auto-auth listener cho AFK Bot
+      const tryAutoAuth = (rawText) => {
+        if (!rawText) return;
+        const lower = rawText.toString().toLowerCase();
+        const pass = afkState.password || '1234';
+
+        if (lower.includes('register') || lower.includes('đăng ký') || lower.includes('dang ky') || lower.includes('nhap lai mat khau')) {
+          this.log('warning', `🔐 Server yêu cầu Đăng Ký cho [${cleanName}]. Tự động gửi: /register ${pass} ${pass}`);
+          setTimeout(() => { try { bot.chat(`/register ${pass} ${pass}`); } catch (e) {} }, 800);
+        } else if (lower.includes('login') || lower.includes('đăng nhập') || lower.includes('dang nhap') || lower.includes('nhap mat khau')) {
+          this.log('info', `🔑 Server yêu cầu Đăng Nhập cho [${cleanName}]. Tự động gửi: /login ${pass}`);
+          setTimeout(() => { try { bot.chat(`/login ${pass}`); } catch (e) {} }, 800);
+        }
+      };
+
       bot.on('spawn', () => {
-        console.log(`[AFK BOT ${cleanName}] Đã vào game treo AFK thành công!`);
+        this.log('success', `[AFK BOT ${cleanName}] Đã vào game treo AFK thành công!`);
         afkState.status = 'AFK_ONLINE';
+
+        // Tự động gửi lệnh /login 1234 sau 1.2s khi spawn
+        const pass = afkState.password || '1234';
+        setTimeout(() => {
+          try {
+            bot.chat(`/login ${pass}`);
+            this.log('info', `🔑 [AFK BOT ${cleanName}] Gửi lệnh đăng nhập: /login ${pass}`);
+          } catch (e) {}
+        }, 1200);
 
         // Anti-AFK: Quay mặt & vẫy tay nhẹ mỗi 20 giây để duy trì kết nối
         afkState.antiAfkInterval = setInterval(() => {
@@ -252,6 +279,10 @@ class BotManager {
 
         this.broadcastState();
       });
+
+      bot.on('message', (jsonMsg) => tryAutoAuth(jsonMsg.toString()));
+      bot.on('title', (titleText) => tryAutoAuth(titleText));
+      bot.on('actionbar', (jsonMsg) => tryAutoAuth(jsonMsg.toString()));
 
       bot.on('end', () => {
         console.log(`[AFK BOT ${cleanName}] Đã ngắt kết nối.`);

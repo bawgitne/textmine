@@ -54,6 +54,7 @@ function App() {
   // Modal State for Adding New Bot
   const [isAddBotModalOpen, setIsAddBotModalOpen] = useState(false);
   const [newAccName, setNewAccName] = useState('');
+  const [newAccPassword, setNewAccPassword] = useState('1234');
   const [logFilter, setLogFilter] = useState('all');
 
   // Initialize Socket.io Connection
@@ -136,9 +137,13 @@ function App() {
     fetch('/api/accounts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: newAccName.trim() })
+      body: JSON.stringify({ 
+        username: newAccName.trim(),
+        password: newAccPassword.trim() || '1234'
+      })
     }).then(() => {
       setNewAccName('');
+      setNewAccPassword('1234');
       setIsAddBotModalOpen(false);
     });
   };
@@ -301,6 +306,26 @@ function App() {
                   value={newAccName}
                   onChange={(e) => setNewAccName(e.target.value)}
                   autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '6px',
+                    border: '1px solid #4A5568',
+                    backgroundColor: '#1A202C',
+                    color: '#FFF',
+                    fontSize: '0.95rem',
+                    marginBottom: '1rem'
+                  }}
+                />
+
+                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: '#E2E8F0' }}>
+                  Mật Khẩu Server (/login Password):
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Mật khẩu (mặc định: 1234)..." 
+                  value={newAccPassword}
+                  onChange={(e) => setNewAccPassword(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1rem',
