@@ -13,6 +13,7 @@
     "express": "^4.18.2",
     "mineflayer": "^4.16.0",
     "mineflayer-pathfinder": "^2.4.5",
+    "mongoose": "^9.9.2",
     "pngjs": "^7.0.0",
     "socket.io": "^4.7.4",
     "vec3": "^0.1.8"

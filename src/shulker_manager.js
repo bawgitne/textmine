@@ -1,9 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const { ShulkerModel } = require('./db');
 
 const DATA_FILE = path.join(__dirname, '../data/shulkers.json');
-
-// Mặc định 1 Shulker Box đầy 27 stack x 64 = 1728 block
 const SHULKER_SLOT_CAPACITY = 1728;
 
 class ShulkerManager {
@@ -12,7 +11,7 @@ class ShulkerManager {
     this.initData();
   }
 
-  initData() {
+  async initData() {
     try {
       const dataDir = path.dirname(DATA_FILE);
       if (!fs.existsSync(dataDir)) {
@@ -23,26 +22,40 @@ class ShulkerManager {
         const raw = fs.readFileSync(DATA_FILE, 'utf8');
         this.shulkerBoxes = JSON.parse(raw) || [];
       } else {
-        // Mặc định mảng rỗng, không tự tạo mock data
         this.shulkerBoxes = [];
-        this.saveData();
+        this.saveDiskData();
+      }
+
+      // Sync from MongoDB Atlas
+      if (ShulkerModel) {
+        const dbShulkers = await ShulkerModel.find({}).lean();
+        if (dbShulkers && dbShulkers.length > 0) {
+          this.shulkerBoxes = dbShulkers.map(s => ({
+            id: s.id,
+            letterId: s.letterId || 'GLOBAL',
+            name: s.name,
+            blockType: s.blockType || 'black_concrete',
+            pos: s.pos || { x: 0, y: 250, z: 0 },
+            initialCapacity: s.initialCapacity || SHULKER_SLOT_CAPACITY,
+            remainingBlocks: s.remainingBlocks || 0,
+            status: s.status || 'AVAILABLE'
+          }));
+          this.saveDiskData();
+          console.log(`☁️ [MONGODB ATLAS] Đã tải ${this.shulkerBoxes.length} Shulker Boxes từ Cloud Database!`);
+        }
       }
     } catch (e) {
-      console.error('Lỗi khi đọc data shulker box:', e);
+      console.error('Lỗi khi đọc data shulker box:', e.message);
       this.shulkerBoxes = [];
     }
   }
 
-  saveData() {
+  saveDiskData() {
     try {
       fs.writeFileSync(DATA_FILE, JSON.stringify(this.shulkerBoxes, null, 2), 'utf8');
     } catch (e) {
-      console.error('Lỗi khi lưu shulker box:', e);
+      console.error('Lỗi khi lưu shulker box vào đĩa:', e.message);
     }
-  }
-
-  generateDefaultShulkers() {
-    return [];
   }
 
   getAllShulkers() {
@@ -59,7 +72,7 @@ class ShulkerManager {
     );
   }
 
-  addShulker(shulkerData) {
+  async addShulker(shulkerData) {
     const newShulker = {
       id: shulkerData.id || `shulker_${Date.now()}`,
       letterId: shulkerData.letterId || "GLOBAL",
@@ -72,11 +85,18 @@ class ShulkerManager {
     };
 
     this.shulkerBoxes.push(newShulker);
-    this.saveData();
+    this.saveDiskData();
+
+    try {
+      await ShulkerModel.findOneAndUpdate({ id: newShulker.id }, newShulker, { upsert: true, new: true });
+    } catch (err) {
+      console.error('⚠️ [MONGODB ATLAS] Lỗi lưu shulker:', err.message);
+    }
+
     return newShulker;
   }
 
-  updateShulker(id, updateFields) {
+  async updateShulker(id, updateFields) {
     const idx = this.shulkerBoxes.findIndex(s => s.id === id);
     if (idx !== -1) {
       this.shulkerBoxes[idx] = { ...this.shulkerBoxes[idx], ...updateFields };
@@ -84,30 +104,24 @@ class ShulkerManager {
         this.shulkerBoxes[idx].remainingBlocks = 0;
         this.shulkerBoxes[idx].status = "DEPLETED";
       }
-      this.saveData();
+      this.saveDiskData();
+
+      try {
+        await ShulkerModel.findOneAndUpdate({ id: id }, this.shulkerBoxes[idx], { upsert: true });
+      } catch (err) {}
+
       return this.shulkerBoxes[idx];
     }
     return null;
   }
 
-  consumeBlocks(id, amount) {
-    const shulker = this.shulkerBoxes.find(s => s.id === id);
-    if (!shulker) return null;
-
-    shulker.remainingBlocks = Math.max(0, shulker.remainingBlocks - amount);
-    if (shulker.remainingBlocks === 0) {
-      shulker.status = "DEPLETED";
-    } else {
-      shulker.status = "IN_USE";
-    }
-
-    this.saveData();
-    return shulker;
-  }
-
-  removeShulker(id) {
+  async removeShulker(id) {
     this.shulkerBoxes = this.shulkerBoxes.filter(s => s.id !== id);
-    this.saveData();
+    this.saveDiskData();
+
+    try {
+      await ShulkerModel.deleteOne({ id: id });
+    } catch (err) {}
   }
 }
 

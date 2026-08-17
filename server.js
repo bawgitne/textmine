@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 
+const { connectDB } = require('./src/db');
 const pixelEngine = require('./src/pixel_engine');
 const shulkerManager = require('./src/shulker_manager');
 const accountManager = require('./src/account_manager');
@@ -242,6 +243,7 @@ io.on('connection', (socket) => {
 // Nạp dữ liệu pixel ảnh và khởi động HTTP Server
 async function startServer() {
   try {
+    await connectDB();
     console.log('🔄 Đang phân tích file ảnh THẤT NGHIỆP.png...');
     globalPixelData = await pixelEngine.loadPixelData();
     console.log(`✅ Phân tích thành công! Tổng cộng: ${globalPixelData.totalPixelsCount.toLocaleString()} pixels cho 10 chữ cái.`);
