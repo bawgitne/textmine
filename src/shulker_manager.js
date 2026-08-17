@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { ShulkerModel } = require('./db');
+const { ShulkerModel, getIsDBConnected } = require('./db');
 
 const DATA_FILE = path.join(__dirname, '../data/shulkers.json');
 const SHULKER_SLOT_CAPACITY = 1728;
@@ -27,7 +27,7 @@ class ShulkerManager {
       }
 
       // Sync from MongoDB Atlas
-      if (ShulkerModel) {
+      if (getIsDBConnected() && ShulkerModel) {
         const dbShulkers = await ShulkerModel.find({}).lean();
         if (dbShulkers && dbShulkers.length > 0) {
           this.shulkerBoxes = dbShulkers.map(s => ({
@@ -87,10 +87,12 @@ class ShulkerManager {
     this.shulkerBoxes.push(newShulker);
     this.saveDiskData();
 
-    try {
-      await ShulkerModel.findOneAndUpdate({ id: newShulker.id }, newShulker, { upsert: true, new: true });
-    } catch (err) {
-      console.error('⚠️ [MONGODB ATLAS] Lỗi lưu shulker:', err.message);
+    if (getIsDBConnected() && ShulkerModel) {
+      try {
+        await ShulkerModel.findOneAndUpdate({ id: newShulker.id }, newShulker, { upsert: true, new: true });
+      } catch (err) {
+        console.error('⚠️ [MONGODB ATLAS] Lỗi lưu shulker:', err.message);
+      }
     }
 
     return newShulker;
@@ -106,9 +108,11 @@ class ShulkerManager {
       }
       this.saveDiskData();
 
-      try {
-        await ShulkerModel.findOneAndUpdate({ id: id }, this.shulkerBoxes[idx], { upsert: true });
-      } catch (err) {}
+      if (getIsDBConnected() && ShulkerModel) {
+        try {
+          await ShulkerModel.findOneAndUpdate({ id: id }, this.shulkerBoxes[idx], { upsert: true });
+        } catch (err) {}
+      }
 
       return this.shulkerBoxes[idx];
     }
@@ -119,9 +123,11 @@ class ShulkerManager {
     this.shulkerBoxes = this.shulkerBoxes.filter(s => s.id !== id);
     this.saveDiskData();
 
-    try {
-      await ShulkerModel.deleteOne({ id: id });
-    } catch (err) {}
+    if (getIsDBConnected() && ShulkerModel) {
+      try {
+        await ShulkerModel.deleteOne({ id: id });
+      } catch (err) {}
+    }
   }
 }
 

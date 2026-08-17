@@ -1110,18 +1110,22 @@ class BotManager {
     const summary = {};
     Object.keys(this.bots).forEach(id => {
       summary[id] = {
+        id: id,
         letterId: id,
         word: this.bots[id].word,
         label: this.bots[id].label,
         username: this.bots[id].username,
-        status: this.bots[id].status,
-        placedCount: this.bots[id].placedCount,
-        totalCount: this.bots[id].totalCount,
+        password: this.bots[id].password || '1234',
+        role: this.bots[id].role || 'AFK_OVERWORLD',
+        status: this.bots[id].status || 'OFFLINE',
+        placedCount: this.bots[id].placedCount || 0,
+        totalCount: this.bots[id].totalCount || 0,
         bedPos: this.bots[id].bedPos,
         shulkerId: this.bots[id].shulkerId,
-        simulating: this.bots[id].simulating
-        ,assignedLetterId: this.bots[id].assignedLetterId
-        ,detectedDistance: this.bots[id].detectedDistance
+        simulating: this.bots[id].simulating,
+        assignedLetterId: this.bots[id].assignedLetterId,
+        detectedDistance: this.bots[id].detectedDistance,
+        connectedAt: this.bots[id].connectedAt || null
       };
     });
 

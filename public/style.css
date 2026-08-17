@@ -221,7 +221,7 @@ body.chakra-ui-dark {
 /* Chakra Table Styling */
 .chakra-table-container {
   width: 100%;
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .chakra-table {
@@ -248,6 +248,10 @@ body.chakra-ui-dark {
   vertical-align: middle;
 }
 
+.chakra-table tr {
+  position: relative;
+}
+
 .chakra-table tr:hover {
   background-color: rgba(255, 255, 255, 0.02);
 }
@@ -256,6 +260,7 @@ body.chakra-ui-dark {
 .menu-container {
   position: relative;
   display: inline-block;
+  z-index: 100;
 }
 
 .menu-btn {
@@ -281,12 +286,12 @@ body.chakra-ui-dark {
   position: absolute;
   right: 0;
   top: 100%;
-  z-index: 100;
+  z-index: 999999;
   background-color: var(--chakra-colors-gray-800);
   border: 1px solid var(--chakra-colors-gray-700);
   border-radius: var(--chakra-radii-md);
-  box-shadow: var(--chakra-shadows-dark-lg);
-  min-width: 220px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95);
+  min-width: 260px;
   padding: 0.5rem 0;
 }
 

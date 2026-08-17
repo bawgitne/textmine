@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { AccountModel } = require('./db');
+const { AccountModel, getIsDBConnected } = require('./db');
 
 const ACCOUNTS_FILE = path.join(__dirname, '../data/accounts.json');
 
@@ -26,8 +26,8 @@ class AccountManager {
         this.saveDiskData();
       }
 
-      // 2. Đồng bộ kết nối với MongoDB Atlas Cloud Database
-      if (AccountModel) {
+      // 2. Đồng bộ kết nối với MongoDB Atlas Cloud Database (nếu đã kết nối)
+      if (getIsDBConnected() && AccountModel) {
         const dbAccounts = await AccountModel.find({}).lean();
         if (dbAccounts && dbAccounts.length > 0) {
           this.accounts = dbAccounts.map(a => ({
@@ -81,11 +81,13 @@ class AccountManager {
     // Lưu đĩa cứng
     this.saveDiskData();
 
-    // Lưu MongoDB Atlas Cloud
-    try {
-      await AccountModel.findOneAndUpdate({ id: newAcc.id }, newAcc, { upsert: true, new: true });
-    } catch (err) {
-      console.error('⚠️ [MONGODB ATLAS] Lỗi lưu account:', err.message);
+    // Lưu MongoDB Atlas Cloud nếu có kết nối
+    if (getIsDBConnected() && AccountModel) {
+      try {
+        await AccountModel.findOneAndUpdate({ id: newAcc.id }, newAcc, { upsert: true, new: true });
+      } catch (err) {
+        console.error('⚠️ [MONGODB ATLAS] Lỗi lưu account:', err.message);
+      }
     }
 
     return newAcc;
@@ -95,10 +97,12 @@ class AccountManager {
     this.accounts = this.accounts.filter(a => a.id !== id && a.username !== id);
     this.saveDiskData();
 
-    try {
-      await AccountModel.deleteOne({ $or: [{ id: id }, { username: id }] });
-    } catch (err) {
-      console.error('⚠️ [MONGODB ATLAS] Lỗi xóa account:', err.message);
+    if (getIsDBConnected() && AccountModel) {
+      try {
+        await AccountModel.deleteOne({ $or: [{ id: id }, { username: id }] });
+      } catch (err) {
+        console.error('⚠️ [MONGODB ATLAS] Lỗi xóa account:', err.message);
+      }
     }
   }
 }
