@@ -42,14 +42,14 @@ app.get('/api/accounts', (req, res) => {
   res.json(accountManager.getAllAccounts());
 });
 
-app.post('/api/accounts', (req, res) => {
-  const saved = accountManager.saveAccount(req.body);
+app.post('/api/accounts', async (req, res) => {
+  const saved = await accountManager.saveAccount(req.body);
   botManager.registerBotAccount(saved);
   res.json(saved);
 });
 
-app.delete('/api/accounts/:id', (req, res) => {
-  accountManager.deleteAccount(req.params.id);
+app.delete('/api/accounts/:id', async (req, res) => {
+  await accountManager.deleteAccount(req.params.id);
   botManager.broadcastState();
   res.json({ success: true });
 });

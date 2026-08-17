@@ -110,15 +110,19 @@ class BotManager {
       id: botId,
       username: username,
       password: accData.password || '1234',
-      role: 'AFK_OVERWORLD', // 'AFK_OVERWORLD' | 'AFK_NON_OVERWORLD' | 'TIME_MANAGER' | 'BUILDER'
+      role: accData.role || 'AFK_OVERWORLD', // 'AFK_OVERWORLD' | 'AFK_NON_OVERWORLD' | 'TIME_MANAGER' | 'BUILDER'
       status: 'OFFLINE',
       assignedLetterId: accData.assignedLetterId || null,
       placedCount: 0,
       totalCount: 0,
-      bedPos: null,
+      bedPos: accData.bedPos || null,
       shulkerId: null,
       botInstance: null
     };
+
+    // Đảm bảo lưu vào MongoDB Atlas và đĩa ngay lập tức
+    const accountManager = require('./account_manager');
+    accountManager.saveAccount(this.bots[botId]);
 
     this.log('success', `✅ Đã đăng ký thành công Bot [${username}] (Pass: ${accData.password || '1234'})!`);
     this.broadcastState();
