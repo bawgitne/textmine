@@ -50,12 +50,13 @@ class AccountManager {
   saveAccount(accData) {
     const existingIdx = this.accounts.findIndex(a => a.id === accData.id || a.username === accData.username);
     const newAcc = {
-      id: accData.id || `acc_${Date.now()}`,
+      id: accData.id || accData.username || `acc_${Date.now()}`,
       username: (accData.username || '').trim(),
-      password: accData.password || '',
+      password: accData.password || '1234',
+      role: accData.role || 'AFK_OVERWORLD',
       authType: accData.authType || 'offline',
-      assignedLetter: accData.assignedLetter || 'T1',
-      autoDetectNearest: false
+      assignedLetterId: accData.assignedLetterId || null,
+      bedPos: accData.bedPos || null
     };
 
     if (existingIdx !== -1) {

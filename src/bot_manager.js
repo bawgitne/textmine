@@ -150,6 +150,18 @@ class BotManager {
     if (!botState) return;
 
     botState.role = role;
+    
+    // Lưu lại thông tin role vào disk
+    const accountManager = require('./account_manager');
+    accountManager.saveAccount({
+      id: botId,
+      username: botState.username,
+      password: botState.password || '1234',
+      role: role,
+      assignedLetterId: botState.assignedLetterId,
+      bedPos: botState.bedPos
+    });
+
     if (role === 'TIME_MANAGER') {
       this.timeKeeper.username = botState.username;
       this.timeKeeper.password = botState.password || '1234';
