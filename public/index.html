@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THẤT NGHIỆP Minecraft Auto-Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Left Vertical Sidebar Navigation -->
+    <aside class="sidebar-nav">
+      <div class="sidebar-logo">
+        <span class="logo-badge">MINECRAFT</span>
+        <h2>THẤT NGHIỆP</h2>
+      </div>
+
+      <nav class="nav-tabs-vertical">
+        <button class="tab-btn active" data-tab="tab-builder">
+          <span class="tab-icon">🏗️</span>
+          <span>Bot Builder & Auto</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-accounts">
+          <span class="tab-icon">🔑</span>
+          <span>Đăng Nhập Tài Khoản</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-canvas">
+          <span class="tab-icon">🖼️</span>
+          <span>Canvas Real-Time</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-shulkers">
+          <span class="tab-icon">📦</span>
+          <span>Quản Lý Shulker Box</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-time">
+          <span class="tab-icon">⏰</span>
+          <span>Thời Gian In-Game</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-afk">
+          <span class="tab-icon">🛌</span>
+          <span>Bot AFK Tùy Chỉnh</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-logs">
+          <span class="tab-icon">📜</span>
+          <span>Live Console Log</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-config">
+          <span class="tab-icon">⚙️</span>
+          <span>Cấu Hình Server</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Progress Bar -->
+      <div class="top-bar">
+        <div class="overall-progress-card">
+          <div class="progress-info">
+            <span>Tiến độ xếp chữ <strong>THẤT NGHIỆP</strong></span>
+            <strong id="overall-percentage">0.00%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="overall-progress-bar" style="width: 0%;"></div>
+          </div>
+          <div class="progress-stats">
+            <span id="overall-placed">0 / 0 pixels</span>
+            <span class="badge badge-primary" id="system-status">Sẵn sàng</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Contents -->
+      <div class="tab-contents-wrapper">
+        
+        <!-- TAB 1: BOT BUILDER ASSIGNMENTS -->
+        <div class="tab-content active" id="tab-builder">
+          <div class="card">
+            <div class="card-header">
+              <h2><span class="icon">🏗️</span> Danh Sách Bot Builder & Tự Động Xác Định Chữ Cái Gần Nhất</h2>
+              <div class="gap-2" style="display: flex;">
+                <button class="btn btn-sm btn-success" id="btn-start-all">🚀 Vào Game Tất Cả Bot</button>
+                <button class="btn btn-sm btn-danger" id="btn-stop-all">⏹ Dừng Tất Cả Bot</button>
+                <button class="btn btn-sm btn-accent" id="btn-toggle-sim">▶ Test Mô Phỏng (All)</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Quick Command Bar -->
+              <div class="quick-cmd-bar mb-3" style="display: flex; gap: 8px; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <select id="cmd-target-bot" style="width: 180px;">
+                  <option value="ALL">🌐 Tất Cả Bot</option>
+                  <option value="T1">Bot Chữ T (1)</option>
+                  <option value="H1">Bot Chữ H (1)</option>
+                  <option value="A_HAT_SAC">Bot Chữ Ấ</option>
+                  <option value="T2">Bot Chữ T (2)</option>
+                  <option value="N">Bot Chữ N</option>
+                  <option value="G">Bot Chữ G</option>
+                  <option value="H2">Bot Chữ H (2)</option>
+                  <option value="I">Bot Chữ I</option>
+                  <option value="E_HAT_NANG">Bot Chữ Ệ</option>
+                  <option value="P">Bot Chữ P</option>
+                </select>
+                <input type="text" id="cmd-input-text" placeholder="Nhập lệnh Command... Ví dụ: /register 1234 1234 hoặc /login 1234" class="flex-1">
+                <button class="btn btn-sm btn-primary" id="btn-send-cmd">💬 Gửi Lệnh</button>
+              </div>
+
+              <div class="info-alert">
+                💡 <strong>Cơ chế đăng nhập bằng Command:</strong> Bot sẽ tự động gửi lệnh <code>/register 1234 1234</code> và <code>/login 1234</code> ngay khi spawn vào server. Bạn cũng có thể tự gõ bất kỳ lệnh command nào ở ô trên để gửi trực tiếp vào game!
+              </div>
+              <div class="bots-grid mt-4" id="bots-container">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- TAB 2: BOT ACCOUNTS & LOGIN FORM -->
+        <div class="tab-content" id="tab-accounts">
+          <div class="dashboard-grid">
+            <!-- Form Đăng Nhập / Lưu Tài Khoản -->
+            <div class="card">
+              <div class="card-header">
+                <h2><span class="icon">🔑</span> Đăng Nhập & Thêm Tài Khoản Bot Mới</h2>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label>Tên Username Bot</label>
+                  <input type="text" id="acc-username" placeholder="Ví dụ: Bot_Builder_01">
+                </div>
+                <div class="form-group mt-2">
+                  <label>Mật Khẩu (Password - Nếu có)</label>
+                  <input type="password" id="acc-password" placeholder="Bỏ trống nếu là Server Offline / Crack">
+                </div>
+                <div class="grid-2 mt-2">
+                  <div class="form-group">
+                    <label>Loại Xác Thực (Auth)</label>
+                    <select id="acc-auth">
+                      <option value="offline">Offline / Crack</option>
+                      <option value="microsoft">Microsoft Account (Bản quyền)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Phân Công Chữ Ban Đầu</label>
+                    <select id="acc-letter">
+                      <option value="T1">Chữ T (1)</option>
+                      <option value="H1">Chữ H (1)</option>
+                      <option value="A_HAT_SAC">Chữ Ấ</option>
+                      <option value="T2">Chữ T (2)</option>
+                      <option value="N">Chữ N</option>
+                      <option value="G">Chữ G</option>
+                      <option value="H2">Chữ H (2)</option>
+                      <option value="I">Chữ I</option>
+                      <option value="E_HAT_NANG">Chữ Ệ</option>
+                      <option value="P">Chữ P</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer gap-2">
+                <button class="btn btn-primary" id="btn-save-account">💾 Lưu Tài Khoản</button>
+                <button class="btn btn-success" id="btn-login-account">⚡ Đăng Nhập Vào Server Ngay</button>
+              </div>
+            </div>
+
+            <!-- Bảng Danh Sách Tài Khoản Đã Lưu -->
+            <div class="card">
+              <div class="card-header">
+                <h2><span class="icon">📋</span> Danh Sách Tài Khoản Đã Lưu</h2>
+              </div>
+              <div class="shulker-table-wrapper" style="max-height: 400px;">
+                <table class="shulker-table">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Loại Auth</th>
+                      <th>Chữ Phân Công</th>
+                      <th>Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="accounts-tbody">
+                    <!-- Rendered by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: CANVAS LIVE MATRIX VIEW -->
+        <div class="tab-content" id="tab-canvas">
+          <div class="card canvas-card">
+            <div class="card-header">
+              <h2><span class="icon">🖼️</span> Ma Trận Canvas Real-Time (THẤT NGHIỆP - 421,227 Pixels)</h2>
+              <div class="canvas-actions">
+                <button class="btn btn-sm btn-outline" id="btn-zoom-fit">Zoom Reset</button>
+              </div>
+            </div>
+            <div class="canvas-wrapper">
+              <canvas id="matrix-canvas" width="1888" height="1240"></canvas>
+              <div class="canvas-legend">
+                <span class="legend-item"><span class="color-dot dot-unplaced"></span> Pixel chưa đặt</span>
+                <span class="legend-item"><span class="color-dot dot-placed"></span> Pixel đã đặt thành công</span>
+                <span class="legend-item"><span class="color-dot dot-center"></span> Giường trung tâm Y=250</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: SHULKER BOX MANAGER -->
+        <div class="tab-content" id="tab-shulkers">
+          <div class="card shulker-card">
+            <div class="card-header">
+              <h2><span class="icon">📦</span> Quản Lý Chi Tiết Rương Shulker Box</h2>
+              <button class="btn btn-sm btn-primary" id="btn-add-shulker">+ Thêm Shulker Mới</button>
+            </div>
+            
+            <!-- Filter Controls -->
+            <div class="shulker-filters">
+              <div class="form-group flex-1">
+                <label>Tìm kiếm Rương</label>
+                <input type="text" id="shulker-search" placeholder="Nhập tên hoặc tọa độ X Y Z...">
+              </div>
+              <div class="form-group">
+                <label>Lọc Theo Chữ</label>
+                <select id="shulker-filter-letter">
+                  <option value="ALL">Tất cả chữ cái</option>
+                  <option value="T1">Chữ T (1)</option>
+                  <option value="H1">Chữ H (1)</option>
+                  <option value="A_HAT_SAC">Chữ Ấ</option>
+                  <option value="T2">Chữ T (2)</option>
+                  <option value="N">Chữ N</option>
+                  <option value="G">Chữ G</option>
+                  <option value="H2">Chữ H (2)</option>
+                  <option value="I">Chữ I</option>
+                  <option value="E_HAT_NANG">Chữ Ệ</option>
+                  <option value="P">Chữ P</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Lọc Trạng Thái</label>
+                <select id="shulker-filter-status">
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="AVAILABLE">Khả dụng (AVAILABLE)</option>
+                  <option value="IN_USE">Đang dùng (IN_USE)</option>
+                  <option value="DEPLETED">Đã hết block (DEPLETED)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Summary Badges -->
+            <div class="shulker-summary-bar">
+              <span class="summary-chip">Tổng Rương: <strong id="sum-total-shulkers">0</strong></span>
+              <span class="summary-chip">Tổng Block Còn: <strong id="sum-total-blocks">0</strong></span>
+              <span class="summary-chip">Rương Đã Hết: <strong id="sum-depleted-shulkers" class="text-danger">0</strong></span>
+            </div>
+
+            <div class="shulker-table-wrapper" style="max-height: 450px;">
+              <table class="shulker-table">
+                <thead>
+                  <tr>
+                    <th>Tên Rương</th>
+                    <th>Chữ Cái</th>
+                    <th>Tọa Độ (X, Y, Z)</th>
+                    <th>Block Còn Lại / Tối Đa</th>
+                    <th>Dung Lượng</th>
+                    <th>Trạng Thái</th>
+                    <th>Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="shulker-tbody">
+                  <!-- Rendered by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: TIME & NIGHT MANAGER -->
+        <div class="tab-content" id="tab-time">
+          <div class="card time-card">
+            <div class="card-header">
+              <h2><span class="icon">⏰</span> TimeKeeper treo tại The End</h2>
+              <span class="badge badge-primary" id="tk-status-badge">OFFLINE</span>
+            </div>
+            
+            <div class="info-alert mb-3">
+              🌌 <strong>Bot chuyên trách tại The End:</strong> bot này không xây và không ngủ. Nó giữ kết nối, chống AFK, đọc tick ngày/đêm; khi tối cho builder thoát và khi sáng gọi lại đúng các builder đang làm việc.
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Tên Username Bot TimeKeeper (Độc Lập)</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="tk-username-input" value="XinChiDungDi" placeholder="Nhập Username Bot TimeKeeper..." class="flex-1">
+                <button class="btn btn-sm btn-outline" id="btn-save-tk-name">💾 Đổi Tên Bot</button>
+              </div>
+            </div>
+
+
+            <div class="time-display-box">
+              <div class="time-indicator">
+                <span class="time-icon" id="tk-sun-moon">☀️</span>
+                <div>
+                  <div class="time-title" id="tk-day-night-text">TRỜI SÁNG</div>
+                  <div class="time-tick" id="tk-ticks-text">Ticks: 0 / 24,000</div>
+                  <div class="time-tick" id="tk-dimension-text">Dimension: chưa kết nối</div>
+                </div>
+              </div>
+              <div class="toggle-switch-wrapper mt-3">
+                <label class="switch">
+                  <input type="checkbox" id="chk-auto-night" checked>
+                  <span class="slider round"></span>
+                </label>
+                <span style="font-size: 14px;">Tối: builder thoát · Sáng: builder hoạt động lại · TimeKeeper luôn treo</span>
+              </div>
+            </div>
+
+            <div class="card-footer gap-2 mt-4">
+              <button class="btn btn-primary" id="btn-toggle-tk">▶ Kích Hoạt Bot_TimeKeeper Độc Lập</button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- TAB 6: AFK BOTS MANAGER -->
+        <div class="tab-content" id="tab-afk">
+          <div class="card afk-card">
+            <div class="card-header">
+              <h2><span class="icon">🛌</span> Quản Lý Bot AFK Tùy Chỉnh (Giữ Chunk / Anti-AFK)</h2>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Nhập Tên Username Bot AFK</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="afk-username-input" placeholder="Ví dụ: AFK_Player01" class="flex-1">
+                  <button class="btn btn-primary" id="btn-create-afk">+ Tạo & Kết Nối Bot AFK</button>
+                </div>
+              </div>
+            </div>
+            <div class="afk-bots-list mt-4" id="afk-bots-container">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 7: LIVE CONSOLE LOGS & ERRORS -->
+        <div class="tab-content" id="tab-logs">
+          <div class="card">
+            <div class="card-header">
+              <h2><span class="icon">📜</span> Nhật Ký Hệ Thống & Terminal Console Real-Time</h2>
+              <div class="gap-2" style="display: flex;">
+                <button class="btn btn-sm btn-outline" id="btn-clear-logs">🗑 Xóa Log</button>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                  <input type="checkbox" id="chk-autoscroll" checked> Tự cuộn màn hình
+                </label>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="terminal-box" id="terminal-console">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 8: SERVER CONFIGURATION -->
+        <div class="tab-content" id="tab-config">
+          <div class="card config-card">
+            <div class="card-header">
+              <h2><span class="icon">⚙️</span> Cấu Hình Server Minecraft</h2>
+            </div>
+            <div class="card-body grid-2">
+              <div class="form-group">
+                <label>Server IP / Host (Mặc định: cloudy.pikamc.vn)</label>
+                <input type="text" id="cfg-host" value="cloudy.pikamc.vn" placeholder="cloudy.pikamc.vn">
+              </div>
+              <div class="form-group">
+                <label>Port Server (Mặc định: 25311)</label>
+                <input type="number" id="cfg-port" value="25311">
+              </div>
+              <div class="form-group">
+                <label>Phiên bản Minecraft (Mặc định: 1.20.2)</label>
+                <input type="text" id="cfg-version" value="1.20.2">
+              </div>
+              <div class="form-group">
+                <label>Cao độ Y (Tầng đặt)</label>
+                <input type="number" id="cfg-y" value="250">
+              </div>
+              <div class="form-group">
+                <label>Block dùng để xây</label>
+                <input type="text" id="cfg-build-block" value="black_concrete" placeholder="black_concrete">
+              </div>
+              <div class="form-group">
+                <label>Độ trễ đặt block (ms)</label>
+                <input type="number" id="cfg-build-delay" value="150" min="50">
+              </div>
+              <div class="form-group">
+                <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cfg-auto-build" checked> Tự động build sau khi nhận diện chữ</label>
+              </div>
+            </div>
+            <div class="card-footer gap-2">
+              <button class="btn btn-primary" id="btn-save-cfg">💾 Lưu Cấu Hình Server</button>
+              <button class="btn btn-warning" id="btn-reset-all">🔄 Reset Tiến Độ Pixels Về 0</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Modal Thêm Shulker Box -->
+    <div class="modal-overlay" id="shulker-modal" style="display: none;">
+      <div class="modal-card">
+        <h3>Thêm Rương Shulker Box Mới</h3>
+        <div class="form-group mt-2">
+          <label>Tên / Nhãn Rương</label>
+          <input type="text" id="modal-shulker-name" placeholder="Ví dụ: Rương T1 - 01">
+        </div>
+        <div class="form-group mt-2">
+          <label>Gán Cho Chữ Cái</label>
+          <select id="modal-shulker-letter">
+            <option value="T1">Chữ T (1)</option>
+            <option value="H1">Chữ H (1)</option>
+            <option value="A_HAT_SAC">Chữ Ấ</option>
+            <option value="T2">Chữ T (2)</option>
+            <option value="N">Chữ N</option>
+            <option value="G">Chữ G</option>
+            <option value="H2">Chữ H (2)</option>
+            <option value="I">Chữ I</option>
+            <option value="E_HAT_NANG">Chữ Ệ</option>
+            <option value="P">Chữ P</option>
+          </select>
+        </div>
+        <div class="grid-3 mt-2">
+          <div class="form-group">
+            <label>Tọa độ X</label>
+            <input type="number" id="modal-shulker-x" value="0">
+          </div>
+          <div class="form-group">
+            <label>Tọa độ Y</label>
+            <input type="number" id="modal-shulker-y" value="250">
+          </div>
+          <div class="form-group">
+            <label>Tọa độ Z</label>
+            <input type="number" id="modal-shulker-z" value="0">
+          </div>
+        </div>
+        <div class="form-group mt-2">
+          <label>Dung tích Block (Mặc định 1,728 blocks)</label>
+          <input type="number" id="modal-shulker-capacity" value="1728">
+        </div>
+        <div class="modal-actions mt-4">
+          <button class="btn btn-secondary" id="btn-close-modal">Hủy</button>
+          <button class="btn btn-primary" id="btn-save-shulker">Lưu Rương</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
