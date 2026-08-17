@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/texture', express.static(path.join(__dirname, 'texture')));
 
 // Biến lưu trữ pixel data nạp từ ảnh
 let globalPixelData = null;
@@ -42,7 +43,7 @@ app.get('/api/accounts', (req, res) => {
 
 app.post('/api/accounts', (req, res) => {
   const saved = accountManager.saveAccount(req.body);
-  botManager.broadcastState();
+  botManager.registerBotAccount(saved);
   res.json(saved);
 });
 
@@ -149,6 +150,22 @@ io.on('connection', (socket) => {
     botManager.updateBuilderUsername(letterId, username);
   });
 
+
+  socket.on('set_bot_role', ({ botId, role }) => {
+    botManager.setBotRole(botId, role);
+  });
+
+  socket.on('start_bot_role', (botId) => {
+    botManager.startBotByRole(botId);
+  });
+
+  socket.on('stop_bot_role', (botId) => {
+    botManager.stopBotByRole(botId);
+  });
+
+  socket.on('delete_bot_account', (botId) => {
+    botManager.deleteBotAccount(botId);
+  });
 
   socket.on('set_time_keeper', (botId) => {
     const result = botManager.setTimeKeeperBot(botId);

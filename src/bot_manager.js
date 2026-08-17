@@ -20,7 +20,7 @@ class BotManager {
     this.config = {
       host: process.env.MC_HOST || 'cloudy.pikamc.vn',
       port: parseInt(process.env.MC_PORT || '25311'),
-      version: process.env.MC_VERSION || '1.20.2',
+      version: process.env.MC_VERSION || '1.21.11',
       yLevel: 250,
       autoBuild: process.env.AUTO_BUILD !== 'false',
       buildBlock: process.env.BUILD_BLOCK || 'black_concrete',
@@ -55,27 +55,8 @@ class BotManager {
     this.io = io;
     this.pixelData = pixelData;
 
-    // Khởi tạo 10 bot builder phụ trách 10 chữ
-    Object.keys(pixelData.letters).forEach((letterId) => {
-      const letter = pixelData.letters[letterId];
-      this.bots[letterId] = {
-        letterId: letterId,
-        word: letter.word,
-        label: letter.label,
-        username: letter.botName,
-        status: 'OFFLINE',
-        placedCount: 0,
-        totalCount: letter.totalPixels,
-        currentBlockCount: 0,
-        bedPos: letter.bed_pos,
-        shulkerId: null,
-        botInstance: null,
-        simulating: false,
-        // Người dùng gán chữ; engine chỉ dùng ảnh pixel của đúng chữ này để build.
-        assignedLetterId: letterId,
-        buildCursor: 0
-      };
-    });
+    // Danh sách bot đăng ký mặc định là rỗng. Chỉ hiển thị các bot người dùng tự đăng ký!
+    this.bots = {};
 
     // Danh sách các Bot AFK tùy chỉnh username
     this.afkBots = {};
@@ -83,15 +64,32 @@ class BotManager {
     // Thêm Bot chuyên trách theo dõi thời gian Day/Night
     this.timeKeeper = {
       username: 'XinChiDungDi',
-      status: 'OFFLINE', // OFFLINE | CONNECTING | MONITORING | SLEEPING
+      status: 'OFFLINE',
       timeOfDay: 0,
       isDay: true,
-      autoManageNight: true, // Tự động quản lý trời tối
+      autoManageNight: true,
       dimension: 'unknown',
       botInstance: null,
       antiAfkInterval: null
     };
 
+    // Load saved accounts from accountManager into this.bots
+    const savedAccounts = this.shulkerManager ? require('./account_manager').getAllAccounts() : [];
+    savedAccounts.forEach(acc => {
+      if (acc.username) {
+        this.bots[acc.id || acc.username] = {
+          id: acc.id || acc.username,
+          username: acc.username,
+          status: 'OFFLINE',
+          assignedLetterId: acc.assignedLetterId || null,
+          placedCount: 0,
+          totalCount: 0,
+          bedPos: null,
+          shulkerId: null,
+          botInstance: null
+        };
+      }
+    });
   }
 
   // Cập nhật tùy chỉnh Username cho Bot Builder
@@ -100,6 +98,113 @@ class BotManager {
       this.bots[letterId].username = newUsername.trim();
       this.broadcastState();
     }
+  }
+
+  // Đăng ký Bot mới từ Modal Pop-up (Role mặc định là AFK Overworld)
+  registerBotAccount(accData) {
+    const username = (accData.username || '').trim();
+    if (!username) return;
+
+    const botId = accData.id || username;
+    this.bots[botId] = {
+      id: botId,
+      username: username,
+      role: 'AFK_OVERWORLD', // 'AFK_OVERWORLD' | 'AFK_NON_OVERWORLD' | 'TIME_MANAGER' | 'BUILDER'
+      status: 'OFFLINE',
+      assignedLetterId: accData.assignedLetterId || null,
+      placedCount: 0,
+      totalCount: 0,
+      bedPos: null,
+      shulkerId: null,
+      botInstance: null
+    };
+
+    this.log('success', `✅ Đã đăng ký thành công Bot [${username}] (Role mặc định: AFK Overworld)!`);
+    this.broadcastState();
+  }
+
+  // Xóa Bot khỏi hệ thống
+  deleteBotAccount(botId) {
+    const botState = this.bots[botId];
+    if (botState) {
+      if (botState.botInstance) {
+        try { botState.botInstance.end(); } catch (e) {}
+      }
+      if (this.afkBots[botState.username]) {
+        this.removeAfkBot(botState.username);
+      }
+      delete this.bots[botId];
+      
+      const accountManager = require('./account_manager');
+      accountManager.deleteAccount(botId);
+
+      this.log('warning', `🗑️ Đã xóa Bot [${botState.username}] khỏi hệ thống.`);
+      this.broadcastState();
+    }
+  }
+
+  // Gán Role cho Bot (AFK_OVERWORLD, AFK_NON_OVERWORLD, TIME_MANAGER hoặc BUILDER)
+  setBotRole(botId, role) {
+    const botState = this.bots[botId];
+    if (!botState) return;
+
+    botState.role = role;
+    if (role === 'TIME_MANAGER') {
+      this.timeKeeper.username = botState.username;
+      this.log('warning', `⭐ Đã đặt Bot [${botState.username}] làm TIME MANAGER (Quản lý thời gian). Bấm nút Play ▶ để chạy!`);
+    } else if (role === 'BUILDER') {
+      this.log('info', `🏗️ Đã đặt Bot [${botState.username}] làm BOT BUILDER. Bấm nút Play ▶ để chạy!`);
+    } else if (role === 'AFK_OVERWORLD') {
+      this.log('info', `🛌 Đã đặt Bot [${botState.username}] làm BOT AFK OVERWORLD (Biết đi ngủ ban đêm). Bấm nút Play ▶ để chạy!`);
+    } else if (role === 'AFK_NON_OVERWORLD') {
+      this.log('info', `🌌 Đã đặt Bot [${botState.username}] làm BOT AFK THE END/NETHER (Treo máy không ngủ). Bấm nút Play ▶ để chạy!`);
+    }
+    this.broadcastState();
+  }
+
+  // Khởi chạy Bot theo đúng Role (Play button ▶)
+  startBotByRole(botId) {
+    const botState = this.bots[botId];
+    if (!botState) return;
+
+    if (botState.role === 'TIME_MANAGER') {
+      this.log('info', `▶ [PLAY] Đang khởi động Bot TimeManager [${botState.username}] vào server...`);
+      this.startTimeKeeper(botState.username);
+      botState.status = 'ONLINE';
+    } else if (botState.role === 'BUILDER') {
+      this.log('info', `▶ [PLAY] Đang khởi động Bot Builder [${botState.username}] vào server...`);
+      const letterKey = botState.assignedLetterId || botId;
+      this.startBot(letterKey);
+    } else {
+      // Role AFK Overworld hoặc AFK Non-Overworld
+      this.log('info', `▶ [PLAY] Đang khởi động Bot AFK [${botState.username}] (${botState.role})...`);
+      this.addAfkBot(botState.username);
+      botState.status = 'ONLINE';
+    }
+    this.broadcastState();
+  }
+
+  // Dừng Bot & cho out khỏi server (Stop button ⏹)
+  stopBotByRole(botId) {
+    const botState = this.bots[botId];
+    if (!botState) return;
+
+    if (botState.role === 'TIME_MANAGER' || botState.username === this.timeKeeper.username) {
+      this.stopTimeKeeper();
+      botState.status = 'OFFLINE';
+      this.log('warning', `⏹ [STOP] Đã dừng Bot TimeManager [${botState.username}] và out khỏi server.`);
+    } else if (botState.role === 'BUILDER') {
+      const letterKey = botState.assignedLetterId || botId;
+      this.stopBot(letterKey);
+      botState.status = 'OFFLINE';
+      this.log('warning', `⏹ [STOP] Đã dừng Bot Builder [${botState.username}] và out khỏi server.`);
+    } else {
+      // Role AFK
+      this.removeAfkBot(botState.username);
+      botState.status = 'OFFLINE';
+      this.log('warning', `⏹ [STOP] Đã dừng Bot AFK [${botState.username}] và out khỏi server.`);
+    }
+    this.broadcastState();
   }
 
   // Thêm Bot AFK với Username tùy chỉnh
@@ -393,25 +498,75 @@ class BotManager {
     this.broadcastState();
   }
 
-  // TimeKeeper vẫn online ở The End. Chỉ các builder đang chạy mới bị tạm ngắt.
+  // Khi TimeKeeper phát hiện TRỜI TỐI: Builder out server, AFK Overworld đi ngủ
   async handleNightTime() {
+    this.log('warning', `🌙 [TIME KEEPER] Phát hiện TRỜI TỐI! Cho các Bot Builder ngắt kết nối và các Bot AFK Overworld đi ngủ...`);
+
     for (const botKey of Object.keys(this.bots)) {
       const state = this.bots[botKey];
-      if (!state.botInstance && state.status !== 'CONNECTING') continue;
-      this.nightPausedBuilders.add(botKey);
-      this.log('info', `[TIME KEEPER] Tạm ngắt builder [${state.username}] trong ban đêm.`);
-      this.stopBot(botKey, { keepNightResume: true });
+      if (!state) continue;
+
+      // 1. Bot Builders: Out server ban đêm
+      if (state.role === 'BUILDER') {
+        if (state.botInstance || state.status === 'BUILDING' || state.status === 'ONLINE') {
+          this.nightPausedBuilders.add(botKey);
+          this.log('info', `🌙 [NIGHT] Builder [${state.username}] out server tạm nghỉ ban đêm.`);
+          this.stopBotByRole(botKey);
+        }
+      } 
+      // 2. Bot AFK Overworld: Tìm giường và đi ngủ trong game
+      else if (state.role === 'AFK_OVERWORLD' && state.botInstance) {
+        try {
+          const bot = state.botInstance;
+          const bedBlock = bot.findBlock({
+            matching: (b) => b.name.includes('bed'),
+            maxDistance: 32
+          });
+
+          if (bedBlock) {
+            this.log('info', `🛌 [NIGHT] Bot AFK Overworld [${state.username}] tìm thấy giường tại ${bedBlock.position}, đang đi ngủ...`);
+            await bot.sleep(bedBlock);
+            state.status = 'SLEEPING';
+          } else {
+            this.log('warning', `⚠️ [NIGHT] Bot AFK Overworld [${state.username}] không tìm thấy giường gần đó để ngủ.`);
+          }
+        } catch (err) {
+          this.log('error', `❌ Bot AFK Overworld [${state.username}] gặp lỗi khi ngủ: ${err.message}`);
+        }
+      }
     }
+
     this.timeKeeper.status = 'MONITORING';
     this.broadcastState();
   }
 
-  // Khi sáng chỉ bật lại đúng những builder đã online trước lúc trời tối.
+  // Khi TimeKeeper phát hiện TRỜI SÁNG: AFK Overworld thức dậy, các Builder đăng nhập lại
   async handleDayTime() {
-    this.timeKeeper.status = 'MONITORING';
+    this.log('success', `☀️ [TIME KEEPER] Phát hiện TRỜI SÁNG! Cho các Bot AFK dậy và kết nối lại các Bot Builder...`);
+
+    // 1. Đánh thức các Bot AFK Overworld đang ngủ
+    for (const botKey of Object.keys(this.bots)) {
+      const state = this.bots[botKey];
+      if (state && state.role === 'AFK_OVERWORLD' && state.botInstance) {
+        try {
+          if (state.botInstance.isSleeping) {
+            await state.botInstance.wake();
+            state.status = 'ONLINE';
+            this.log('info', `☀️ [DAY] Bot AFK Overworld [${state.username}] đã thức dậy.`);
+          }
+        } catch (err) {}
+      }
+    }
+
+    // 2. Kết nối lại các Bot Builder đã out lúc trời tối
     const toResume = Array.from(this.nightPausedBuilders);
     this.nightPausedBuilders.clear();
-    for (const botKey of toResume) this.startBot(botKey);
+    for (const botKey of toResume) {
+      this.log('info', `☀️ [DAY] Cho Bot Builder [${this.bots[botKey]?.username || botKey}] đăng nhập lại server...`);
+      this.startBotByRole(botKey);
+    }
+
+    this.timeKeeper.status = 'MONITORING';
     this.broadcastState();
   }
 

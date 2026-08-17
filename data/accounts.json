@@ -6,5 +6,37 @@
     "authType": "offline",
     "assignedLetter": "AUTO",
     "autoDetectNearest": true
+  },
+  {
+    "id": "acc_1786960785576",
+    "username": "TestBot_01",
+    "password": "",
+    "authType": "offline",
+    "assignedLetter": "T1",
+    "autoDetectNearest": false
+  },
+  {
+    "id": "acc_1786961344677",
+    "username": "demotest",
+    "password": "",
+    "authType": "offline",
+    "assignedLetter": "T1",
+    "autoDetectNearest": false
+  },
+  {
+    "id": "acc_1786961352533",
+    "username": "hgyh",
+    "password": "",
+    "authType": "offline",
+    "assignedLetter": "T1",
+    "autoDetectNearest": false
+  },
+  {
+    "id": "acc_1786961512309",
+    "username": "test111",
+    "password": "",
+    "authType": "offline",
+    "assignedLetter": "T1",
+    "autoDetectNearest": false
   }
 ]

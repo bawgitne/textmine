@@ -1,22 +1,43 @@
+/* ==========================================================================
+   Chakra UI Dark Theme Tokens & Global CSS for THẤT NGHIỆP Dashboard
+   ========================================================================== */
+
 :root {
-  --bg-color: #0b0f19;
-  --panel-bg: rgba(23, 31, 49, 0.75);
-  --card-bg: rgba(30, 41, 59, 0.6);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  /* Chakra UI Dark Palette Tokens */
+  --chakra-colors-gray-50: #F7FAFC;
+  --chakra-colors-gray-100: #EDF2F7;
+  --chakra-colors-gray-200: #E2E8F0;
+  --chakra-colors-gray-700: #2D3748;
+  --chakra-colors-gray-800: #1A202C;
+  --chakra-colors-gray-900: #171923;
+  --chakra-colors-gray-950: #0D1117;
+  
+  --chakra-colors-teal-300: #4FD1C5;
+  --chakra-colors-teal-400: #38B2AC;
+  --chakra-colors-teal-500: #319795;
+  
+  --chakra-colors-blue-400: #4299E1;
+  --chakra-colors-blue-500: #3182CE;
 
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #4f46e5;
-  --accent-success: #10b981;
-  --accent-warning: #f59e0b;
-  --accent-danger: #ef4444;
-  --accent-cyan: #06b6d4;
+  --chakra-colors-green-400: #48BB78;
+  --chakra-colors-green-500: #38A169;
+  --chakra-colors-green-900: #1C4532;
 
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
-  --shadow-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --chakra-colors-red-400: #F56565;
+  --chakra-colors-red-500: #E53E3E;
+  --chakra-colors-red-900: #63171B;
+
+  --chakra-colors-purple-400: #9F7AEA;
+  --chakra-colors-purple-500: #805AD5;
+
+  --chakra-radii-sm: 0.25rem;
+  --chakra-radii-md: 0.375rem;
+  --chakra-radii-lg: 0.5rem;
+  --chakra-radii-xl: 0.75rem;
+
+  --chakra-shadows-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --chakra-shadows-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --chakra-shadows-dark-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -25,620 +46,535 @@
   padding: 0;
 }
 
-body {
-  font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-main);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
-  background-attachment: fixed;
+body.chakra-ui-dark {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background-color: var(--chakra-colors-gray-900);
+  color: var(--chakra-colors-gray-100);
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* App Layout - Vertical Sidebar on Left */
-.app-layout {
+/* App Layout Grid */
+.app-container {
   display: flex;
   min-height: 100vh;
 }
 
-/* Sidebar Navigation (Bên trái) */
-.sidebar-nav {
-  width: 270px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid var(--border-color);
-  padding: 24px 16px;
+/* Chakra Sidebar Navigation */
+.chakra-sidebar {
+  width: 260px;
+  background-color: var(--chakra-colors-gray-800);
+  border-right: 1px solid var(--chakra-colors-gray-700);
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  z-index: 100;
+  padding: 1.5rem 1rem;
+  flex-shrink: 0;
 }
 
-.sidebar-logo {
+.chakra-brand {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 8px;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  padding: 0 0.5rem;
 }
 
-.logo-badge {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--accent-primary);
+.chakra-brand i {
+  font-size: 1.75rem;
+  color: var(--chakra-colors-teal-300);
 }
 
-.sidebar-logo h2 {
-  font-size: 22px;
+.chakra-brand h1 {
+  font-size: 1.25rem;
   font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(90deg, #ffffff, #94a3b8);
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, var(--chakra-colors-teal-300), var(--chakra-colors-blue-400));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Vertical Tab Buttons */
-.nav-tabs-vertical {
+.chakra-nav-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.5rem;
 }
 
-.tab-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.chakra-nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--chakra-radii-md);
+  color: var(--chakra-colors-gray-200);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.2s ease-in-out;
   text-align: left;
   width: 100%;
 }
 
-.tab-icon {
-  font-size: 18px;
+.chakra-nav-item:hover {
+  background-color: var(--chakra-colors-gray-700);
+  color: var(--chakra-colors-teal-300);
 }
 
-.tab-btn:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+.chakra-nav-item.active {
+  background-color: rgba(79, 209, 197, 0.15);
+  color: var(--chakra-colors-teal-300);
+  border-left: 3px solid var(--chakra-colors-teal-300);
 }
 
-.tab-btn.active {
-  background: var(--accent-primary);
-  color: #ffffff;
-  box-shadow: 0 4px 16px 0 rgba(99, 102, 241, 0.4);
-}
-
-/* Main Content Area (Bên phải) */
-.main-content {
+/* Main Content Layout */
+.chakra-main {
   flex: 1;
-  padding: 24px 32px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: calc(100vw - 270px);
+  overflow-y: auto;
 }
 
-/* Top Progress Bar Card */
-.top-bar {
-  width: 100%;
-}
-
-.overall-progress-card {
-  background: var(--panel-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 16px 24px;
+/* Top Stats Header */
+.chakra-topbar {
+  background-color: var(--chakra-colors-gray-800);
+  border-bottom: 1px solid var(--chakra-colors-gray-700);
+  padding: 1rem 1.75rem;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-shadow: var(--shadow-glow);
-}
-
-.progress-info {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 14px;
 }
 
-.progress-info strong {
-  color: var(--accent-success);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 18px;
-}
-
-.progress-bar-bg {
-  width: 100%;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
-  border-radius: 999px;
-  transition: width 0.3s ease;
-}
-
-.progress-stats {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* Tab Contents Wrapper */
-.tab-contents-wrapper {
-  flex: 1;
-}
-
-.tab-content {
-  display: none;
-  animation: fadeIn 0.25s ease-in-out;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.info-alert {
-  background: rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  color: #c7d2fe;
-}
-
-/* Dashboard Grid */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 450px;
-  gap: 24px;
-}
-
-.card {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-header h2 {
-  font-size: 18px;
-  font-weight: 600;
+.chakra-status-badges {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 1rem;
 }
 
-/* Canvas Area */
-.canvas-card {
-  height: 580px;
-}
-
-.canvas-wrapper {
-  position: relative;
-  flex: 1;
-  background: #040711;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#matrix-canvas {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
-
-.canvas-legend {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-  display: flex;
-  gap: 16px;
-  font-size: 12px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.color-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.dot-unplaced { background: #334155; }
-.dot-placed { background: #10b981; }
-.dot-center { background: #ef4444; }
-
-/* Time Display Box */
-.time-display-box {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-color);
-  padding: 14px;
-  border-radius: var(--radius-sm);
-}
-
-.time-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.time-icon { font-size: 28px; }
-.time-title { font-weight: 700; font-size: 15px; }
-.time-tick { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
-
-.toggle-switch-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Switch Toggle CSS */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 22px;
-}
-
-.switch input { opacity: 0; width: 0; height: 0; }
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #334155;
-  transition: .3s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .3s;
-}
-
-input:checked + .slider { background-color: var(--accent-success); }
-input:checked + .slider:before { transform: translateX(22px); }
-.slider.round { border-radius: 34px; }
-.slider.round:before { border-radius: 50%; }
-
-/* Form Controls */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-input, select {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-input:focus, select:focus {
-  border-color: var(--accent-primary);
-}
-
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-.gap-2 { gap: 8px; }
-.mt-2 { margin-top: 8px; }
-.mt-4 { margin-top: 16px; }
-.flex-1 { flex: 1; }
-
-/* Buttons */
-.btn {
-  border: none;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
+.chakra-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  font-size: 13px;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--chakra-radii-lg);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-.btn-primary { background: var(--accent-primary); color: white; }
-.btn-primary:hover { background: var(--accent-primary-hover); }
+.chakra-badge-green {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: var(--chakra-colors-green-400);
+  border: 1px solid var(--chakra-colors-green-500);
+}
 
-.btn-success { background: var(--accent-success); color: white; }
-.btn-danger { background: var(--accent-danger); color: white; }
-.btn-warning { background: var(--accent-warning); color: #0f172a; }
-.btn-accent { background: var(--accent-cyan); color: #0f172a; }
-.btn-secondary { background: #334155; color: white; }
-.btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
-.btn-sm { padding: 6px 10px; font-size: 12px; }
+.chakra-badge-red {
+  background-color: rgba(245, 101, 101, 0.2);
+  color: var(--chakra-colors-red-400);
+  border: 1px solid var(--chakra-colors-red-500);
+}
 
-/* Shulker Filters & Table */
-.shulker-filters {
+.chakra-badge-purple {
+  background-color: rgba(159, 122, 234, 0.2);
+  color: var(--chakra-colors-purple-400);
+  border: 1px solid var(--chakra-colors-purple-500);
+}
+
+.chakra-badge-blue {
+  background-color: rgba(66, 153, 225, 0.2);
+  color: var(--chakra-colors-blue-400);
+  border: 1px solid var(--chakra-colors-blue-500);
+}
+
+/* Main Content Area */
+.chakra-content-body {
+  padding: 1.75rem;
+  flex: 1;
+}
+
+/* Chakra Card Container */
+.chakra-card {
+  background-color: var(--chakra-colors-gray-800);
+  border-radius: var(--chakra-radii-xl);
+  border: 1px solid var(--chakra-colors-gray-700);
+  box-shadow: var(--chakra-shadows-dark-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.chakra-card-header {
   display: flex;
-  gap: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
 }
 
-.shulker-summary-bar {
+.chakra-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--chakra-colors-gray-50);
   display: flex;
-  gap: 12px;
-  font-size: 13px;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.summary-chip {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid var(--border-color);
-  padding: 6px 12px;
-  border-radius: 999px;
-  color: var(--text-muted);
+/* Chakra Table Styling */
+.chakra-table-container {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.summary-chip strong { color: var(--text-main); }
-.text-danger { color: var(--accent-danger) !important; }
-
-.shulker-table-wrapper {
-  max-height: 450px;
-  overflow-y: auto;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-}
-
-.shulker-table {
+.chakra-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  text-align: left;
+  font-size: 0.92rem;
 }
 
-.shulker-table th, .shulker-table td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
+.chakra-table th {
+  background-color: var(--chakra-colors-gray-900);
+  color: var(--chakra-colors-gray-200);
+  font-weight: 700;
+  padding: 0.85rem 1rem;
+  border-bottom: 2px solid var(--chakra-colors-gray-700);
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+}
+
+.chakra-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--chakra-colors-gray-700);
   vertical-align: middle;
 }
 
-.shulker-table th {
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text-muted);
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.chakra-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
-.capacity-mini-bar {
-  width: 90px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-top: 4px;
-}
-
-.capacity-mini-fill {
-  height: 100%;
-  background: var(--accent-success);
-  border-radius: 999px;
-  transition: width 0.3s ease;
-}
-
-.capacity-mini-fill.low { background: var(--accent-warning); }
-.capacity-mini-fill.empty { background: var(--accent-danger); }
-
-/* Badges */
-.badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
+/* Chakra Action Menu (3-Dots Dropdown) */
+.menu-container {
+  position: relative;
   display: inline-block;
 }
 
-.badge-primary { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
-.badge-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
-.badge-warning { background: rgba(245, 158, 11, 0.2); color: #fde047; }
-.badge-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-
-/* Bots Grid Section */
-.bots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.bot-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-}
-
-.bot-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.bot-title { font-weight: 700; font-size: 15px; }
-
-.bot-meta {
-  font-size: 12px;
-  color: var(--text-muted);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bot-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bot-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-/* AFK Bots List */
-.afk-bots-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.afk-bot-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-color);
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-}
-
-.afk-bot-info {
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--chakra-colors-gray-200);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-/* Terminal Console Box */
-.terminal-box {
-  background: #05070e;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  height: 480px;
-  overflow-y: auto;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
-}
-
-.log-line {
-  display: flex;
-  gap: 10px;
-  word-break: break-all;
-}
-
-.log-time { color: #64748b; user-select: none; }
-.log-type { font-weight: 700; padding: 0 4px; border-radius: 3px; font-size: 11px; }
-
-.log-info .log-type { color: #38bdf8; }
-.log-success .log-type { color: #4ade80; }
-.log-warning .log-type { color: #facc15; }
-.log-error .log-type { color: #f87171; }
-
-.log-info .log-msg { color: #e2e8f0; }
-.log-success .log-msg { color: #86efac; }
-.log-warning .log-msg { color: #fef08a; }
-.log-error .log-msg { color: #fca5a5; }
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  transition: background-color 0.2s;
 }
 
-.modal-card {
-  background: #1e293b;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  width: 450px;
-  box-shadow: var(--shadow-glow);
+.menu-btn:hover {
+  background-color: var(--chakra-colors-gray-700);
+  color: var(--chakra-colors-teal-300);
 }
 
-.modal-actions {
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 100;
+  background-color: var(--chakra-colors-gray-800);
+  border: 1px solid var(--chakra-colors-gray-700);
+  border-radius: var(--chakra-radii-md);
+  box-shadow: var(--chakra-shadows-dark-lg);
+  min-width: 220px;
+  padding: 0.5rem 0;
+}
+
+.menu-dropdown-item {
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--chakra-colors-gray-100);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.menu-dropdown-item:hover {
+  background-color: var(--chakra-colors-gray-700);
+  color: var(--chakra-colors-teal-300);
+}
+
+/* ==========================================================================
+   TAB 3: MAP SHULKER & BED UI (9 POSITION CARDS FOR "THẤT NGHIỆP")
+   ========================================================================== */
+
+.shulker-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.bed-map-card {
+  background-color: var(--chakra-colors-gray-900);
+  border-radius: var(--chakra-radii-lg);
+  border: 2px solid var(--chakra-colors-gray-700);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.bed-map-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--chakra-colors-teal-400);
+}
+
+.bed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bed-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--chakra-colors-teal-300);
+}
+
+.bed-icon-badge {
+  font-size: 1.5rem;
+}
+
+.shulkers-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Green vs Red Shulker Box UI Cards */
+.shulker-box-ui {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: var(--chakra-radii-md);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* Status GREEN: Has items */
+.shulker-box-ui.status-green {
+  background-color: rgba(72, 187, 120, 0.12);
+  border: 1px solid var(--chakra-colors-green-500);
+  color: var(--chakra-colors-green-400);
+}
+
+/* Status RED: Depleted / Empty */
+.shulker-box-ui.status-red {
+  background-color: rgba(245, 101, 101, 0.12);
+  border: 1px solid var(--chakra-colors-red-500);
+  color: var(--chakra-colors-red-400);
+}
+
+.shulker-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.shulker-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.shulker-coords {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+/* Buttons */
+.chakra-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--chakra-radii-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chakra-btn-teal {
+  background-color: var(--chakra-colors-teal-500);
+  color: white;
+}
+
+.chakra-btn-teal:hover {
+  background-color: var(--chakra-colors-teal-400);
+}
+
+.chakra-btn-blue {
+  background-color: var(--chakra-colors-blue-500);
+  color: white;
+}
+
+.chakra-btn-blue:hover {
+  background-color: var(--chakra-colors-blue-400);
+}
+
+/* Canvas Container */
+.canvas-wrapper {
+  background-color: var(--chakra-colors-gray-900);
+  border-radius: var(--chakra-radii-lg);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  border: 1px solid var(--chakra-colors-gray-700);
+}
+
+#pixel-canvas {
+  background-color: #111;
+  border-radius: var(--chakra-radii-md);
+  image-rendering: pixelated;
+  cursor: crosshair;
+}
+
+/* Console Log */
+.chakra-console {
+  background-color: var(--chakra-colors-gray-950);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  padding: 1rem;
+  border-radius: var(--chakra-radii-lg);
+  max-height: 240px;
+  overflow-y: auto;
+  color: #A0AEC0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.log-line-info { color: var(--chakra-colors-blue-400); }
+.log-line-success { color: var(--chakra-colors-green-400); }
+.log-line-warning { color: #ECC94B; }
+.log-line-error { color: var(--chakra-colors-red-400); }
+
+/* Minecraft Bed Orientation Composite */
+.mc-bed-composite {
+  display: inline-flex;
+  flex-direction: column; /* Head on top, Foot on bottom */
+  align-items: center;
+  justify-content: center;
+  gap: 0px;
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--chakra-colors-gray-700);
+}
+
+.bed-head-img, .bed-foot-img {
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* Modal Overlay & Pop-up Styles for Chakra UI Theme */
+.chakra-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.chakra-modal-content {
+  background-color: var(--chakra-colors-gray-800);
+  border: 1px solid var(--chakra-colors-gray-700);
+  border-radius: var(--chakra-radii-xl);
+  box-shadow: var(--chakra-shadows-dark-lg);
+  width: 90%;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+.chakra-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--chakra-colors-gray-700);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chakra-modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--chakra-colors-gray-50);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chakra-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--chakra-colors-gray-400);
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.chakra-modal-close:hover {
+  background-color: var(--chakra-colors-gray-700);
+  color: var(--chakra-colors-red-400);
+}
+
+.chakra-modal-body {
+  padding: 1.5rem;
+}
+
+.chakra-modal-footer {
+  padding: 1rem 1.5rem;
+  background-color: var(--chakra-colors-gray-900);
+  border-top: 1px solid var(--chakra-colors-gray-700);
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 0.75rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
