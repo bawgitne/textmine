@@ -201,20 +201,23 @@ class BuilderEngine {
 
       try {
         const container = await bot.openContainer(shulkerBlock);
-        const items = container.containerItems();
+        const items = container.containerItems() || [];
 
         let itemsWithdrawn = 0;
         for (const item of items) {
+          if (!item || !item.name) continue;
           const isBuildBlock = item.name === this.manager.config.buildBlock ||
             (bot.registry.blocksByName[item.name] && bot.registry.blocksByName[item.name].boundingBox === 'block');
 
           if (isBuildBlock) {
-            await container.withdraw(item.type, null, item.count);
-            itemsWithdrawn++;
+            try {
+              await container.withdraw(item.type, null, item.count);
+              itemsWithdrawn++;
+            } catch (e) {}
           }
         }
 
-        container.close();
+        try { container.close(); } catch (e) {}
 
         if (this.findBuildItem(bot)) {
           this.manager.log('success', `📦 Bot [${state.username}] đã rút block thành công từ Shulker Box (${pos.x}, ${pos.y}, ${pos.z})!`);
@@ -292,6 +295,12 @@ class BuilderEngine {
           return true;
         } catch (e) {}
       }
+    }
+
+    // Nếu bot đã ở ngay gần Giường (bán kính 10m) mà vẫn không rút được block -> Rương tại Bed đã hết block, dừng lại ở NEED_BLOCKS chứ không tự sát lặp đi lặp lại!
+    const bedVec = this.getBedPosition(state, null);
+    if (bot && bot.entity && bot.entity.position && bot.entity.position.distanceTo(bedVec) <= 10) {
+      return false;
     }
 
     // 2. Nếu túi đồ & rương lân cận đều hết -> Tự nhảy lầu Y=172 / chìm biển tự sát để về lại Giường
