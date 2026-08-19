@@ -157,6 +157,21 @@ class ShulkerManager {
     return shulker;
   }
 
+  markDepletedByPos(pos) {
+    if (!pos) return;
+    const shulker = this.shulkerBoxes.find(s =>
+      s.pos && Math.round(s.pos.x) === Math.round(pos.x) && Math.round(s.pos.y) === Math.round(pos.y) && Math.round(s.pos.z) === Math.round(pos.z)
+    );
+    if (shulker) {
+      shulker.remainingBlocks = 0;
+      shulker.status = "DEPLETED";
+      this.saveDiskData();
+      if (getIsDBConnected() && ShulkerModel) {
+        ShulkerModel.findOneAndUpdate({ id: shulker.id }, { $set: { remainingBlocks: 0, status: "DEPLETED" } }).catch(() => {});
+      }
+    }
+  }
+
   async removeShulker(id) {
     this.shulkerBoxes = this.shulkerBoxes.filter(s => s.id !== id);
     this.saveDiskData();

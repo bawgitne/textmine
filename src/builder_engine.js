@@ -183,9 +183,15 @@ class BuilderEngine {
       return false;
     }
 
-    this.manager.log('info', `🧰 Bot [${state.username}] đang tiến lại gần Rương Shulker Box để rút block xây dựng...`);
+    // Sắp xếp các rương theo khoảng cách từ gần đến xa
+    if (bot.entity && bot.entity.position) {
+      shulkerPositions.sort((a, b) => bot.entity.position.distanceTo(a) - bot.entity.position.distanceTo(b));
+    }
 
-    for (const pos of shulkerPositions) {
+    this.manager.log('info', `🧰 Bot [${state.username}] đang tiến lại gần các Rương Shulker Box (${shulkerPositions.length} rương) để rút block xây dựng...`);
+
+    for (let i = 0; i < shulkerPositions.length; i++) {
+      const pos = shulkerPositions[i];
       const shulkerBlock = bot.blockAt(pos);
       if (!shulkerBlock || !shulkerBlock.name.includes('shulker_box')) continue;
 
@@ -222,12 +228,17 @@ class BuilderEngine {
         if (this.findBuildItem(bot)) {
           this.manager.log('success', `📦 Bot [${state.username}] đã rút block thành công từ Shulker Box (${pos.x}, ${pos.y}, ${pos.z})!`);
           return true;
+        } else {
+          // Rương trống / không có block cần thiết -> Đánh dấu rương rỗng và tiếp tục thử rương tiếp theo
+          this.manager.log('warning', `⚠️ Rương Shulker tại (${pos.x}, ${pos.y}, ${pos.z}) trống/hết block xây! Đang tự động thử rương tiếp theo (${i + 1}/${shulkerPositions.length})...`);
+          this.manager.shulkerManager.markDepletedByPos(pos);
         }
       } catch (err) {
         this.manager.log('warning', `⚠️ Bot [${state.username}] không mở được Shulker Box tại (${pos.x}, ${pos.y}, ${pos.z}): ${err.message}`);
       }
     }
 
+    this.manager.log('warning', `⚠️ Toàn bộ ${shulkerPositions.length} Rương Shulker Box xung quanh Bot [${state.username}] đều đã HẾT block!`);
     return false;
   }
 
