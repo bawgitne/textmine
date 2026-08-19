@@ -1,1 +1,1234 @@
-[]
+[
+  {
+    "id": "shulker_T1_-451_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-450_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-450, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -450,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 730,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-450_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-450, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -450,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-450_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-450, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -450,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_275",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_279",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_279",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_275",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_275",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_279",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_279",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-450_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-450, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -450,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-450_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-450, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -450,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_275",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_275",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-450_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-450, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -450,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_275",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_276",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-451_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-451, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -451,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_172_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 172, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 172,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_172_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 172, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 172,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_172_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 172, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 172,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_172_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 172, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 172,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_172_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 172, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 172,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_172_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 172, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 172,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_172_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 172, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 172,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_172_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 172, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 172,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_172_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 172, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 172,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_172_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 172, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 172,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_172_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 172, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 172,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_172_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 172, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 172,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_172_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 172, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 172,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_172_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 172, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 172,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_172_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 172, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 172,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_172_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 172, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 172,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_172_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 172, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 172,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_172_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 172, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 172,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_172_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 172, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 172,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_172_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 172, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 172,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_172_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 172, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 172,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_172_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 172, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 172,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_173_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_173_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_173_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_173_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_173_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_276",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_278",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_173_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 173, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 173,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_173_279",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_173_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 173, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 173,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_173_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 173, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 173,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_173_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 173, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 173,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_173_277",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_173_281",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 173, 281)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
+      "y": 173,
+      "z": 281
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_173_276",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_173_282",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 173, 282)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 173,
+      "z": 282
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-112_173_280",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-112, 173, 280)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -112,
+      "y": 173,
+      "z": 280
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 838,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_282",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 282)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 282
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-110_173_276",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-110, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -110,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-111_173_282",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-111, 173, 282)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -111,
+      "y": 173,
+      "z": 282
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-113_173_276",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-113, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -113,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  }
+]

@@ -3,7 +3,9 @@ const vec3 = require('vec3');
 const { pathfinder, Movements } = require('mineflayer-pathfinder');
 const shulkerManager = require('./shulker_manager');
 const BuilderEngine = require('./builder_engine');
+const configManager = require('./config_manager');
 const { findNearestLetter } = require('./letter_assignment');
+const { getBuilderAssignment } = require('./builder_assignments');
 const { isDayTime, ticksToClock, normalizeTime } = require('./time_utils');
 
 class BotManager {
@@ -17,16 +19,7 @@ class BotManager {
     this.nightPausedBuilders = new Set();
     this.timeListenerBots = new WeakSet();
     this.logs = []; // Log buffer lưu 200 dòng log gần nhất
-    this.config = {
-      host: process.env.MC_HOST || 'cloudy.pikamc.vn',
-      port: parseInt(process.env.MC_PORT || '25311'),
-      version: process.env.MC_VERSION || '1.21.11',
-      yLevel: 250,
-      autoBuild: process.env.AUTO_BUILD !== 'false',
-      buildBlock: process.env.BUILD_BLOCK || 'black_concrete',
-      buildDelayMs: Math.max(50, parseInt(process.env.BUILD_DELAY_MS || '150', 10)),
-      timeKeeperAntiAfkMs: Math.max(10000, parseInt(process.env.TK_ANTI_AFK_MS || '20000', 10))
-    };
+    this.config = configManager.getConfig();
   }
 
   // Hàm ghi log tập trung và phát tín hiệu realtime về Web Dashboard
@@ -61,13 +54,16 @@ class BotManager {
     // Danh sách các Bot AFK tùy chỉnh username
     this.afkBots = {};
 
+    const cfg = configManager.getConfig();
+    this.config = cfg;
+
     // Thêm Bot chuyên trách theo dõi thời gian Day/Night
     this.timeKeeper = {
-      username: 'XinChiDungDi',
+      username: cfg.timeKeeperUsername || 'XinChiDungDi',
       status: 'OFFLINE',
       timeOfDay: 0,
       isDay: true,
-      autoManageNight: true,
+      autoManageNight: cfg.autoManageNight !== false,
       dimension: 'unknown',
       botInstance: null,
       antiAfkInterval: null
@@ -80,11 +76,13 @@ class BotManager {
         this.bots[acc.id || acc.username] = {
           id: acc.id || acc.username,
           username: acc.username,
+          password: acc.password || '1234',
+          role: acc.role || 'BUILDER',
           status: 'OFFLINE',
           assignedLetterId: acc.assignedLetterId || null,
           placedCount: 0,
           totalCount: 0,
-          bedPos: null,
+          bedPos: acc.bedPos || null,
           shulkerId: null,
           botInstance: null
         };
@@ -191,8 +189,7 @@ class BotManager {
       botState.status = 'ONLINE';
     } else if (botState.role === 'BUILDER') {
       this.log('info', `▶ [PLAY] Đang khởi động Bot Builder [${botState.username}] vào server...`);
-      const letterKey = botState.assignedLetterId || botId;
-      this.startBot(letterKey, { username: botState.username, password: botState.password || '1234' });
+      this.startBot(botId, { username: botState.username, password: botState.password || '1234' });
     } else {
       // Role AFK Overworld hoặc AFK Non-Overworld
       this.log('info', `▶ [PLAY] Đang khởi động Bot AFK [${botState.username}] (${botState.role})...`);
@@ -212,8 +209,7 @@ class BotManager {
       botState.status = 'OFFLINE';
       this.log('warning', `⏹ [STOP] Đã dừng Bot TimeManager [${botState.username}] và out khỏi server.`);
     } else if (botState.role === 'BUILDER') {
-      const letterKey = botState.assignedLetterId || botId;
-      this.stopBot(letterKey);
+      this.stopBot(botId);
       botState.status = 'OFFLINE';
       this.log('warning', `⏹ [STOP] Đã dừng Bot Builder [${botState.username}] và out khỏi server.`);
     } else {
@@ -244,6 +240,16 @@ class BotManager {
     };
 
     this.afkBots[cleanName] = afkState;
+
+    // Lưu bot AFK vào Account Model (MongoDB & Disk)
+    const accountManager = require('./account_manager');
+    accountManager.saveAccount({
+      id: cleanName,
+      username: cleanName,
+      password: password || '1234',
+      role: 'AFK_OVERWORLD'
+    });
+
     this.broadcastState();
 
     try {
@@ -251,10 +257,14 @@ class BotManager {
         host: this.config.host,
         port: this.config.port,
         username: cleanName,
-        version: this.config.version
+        version: this.config.version || '1.21.11'
       });
 
+      bot.loadPlugin(pathfinder);
       afkState.botInstance = bot;
+
+      // Đăng ký listener theo dõi thời gian và quản lý đêm tự động
+      this.attachTimeKeeperListeners(bot);
 
       // Auto-auth listener cho AFK Bot
       const tryAutoAuth = (rawText) => {
@@ -272,10 +282,15 @@ class BotManager {
       };
 
       bot.on('spawn', () => {
+        // Bỏ qua event trễ từ một connection đã bị người dùng bấm Stop/thay thế.
+        if (afkState.botInstance !== bot) {
+          try { bot.quit('Connection was stopped'); } catch (e) {}
+          return;
+        }
         this.log('success', `[AFK BOT ${cleanName}] Đã vào game treo AFK thành công!`);
         afkState.status = 'AFK_ONLINE';
 
-        // Tự động gửi lệnh /login 1234 sau 1.2s khi spawn
+        // 1. Tự động gửi lệnh /login 1234 sau 1.2s khi spawn
         const pass = afkState.password || '1234';
         setTimeout(() => {
           try {
@@ -283,6 +298,39 @@ class BotManager {
             this.log('info', `🔑 [AFK BOT ${cleanName}] Gửi lệnh đăng nhập: /login ${pass}`);
           } catch (e) {}
         }, 1200);
+
+        // 2. Quét Giường xung quanh & Thử đi ngủ qua đêm nếu hiện tại đang là ban đêm (sau 2.5s)
+        setTimeout(() => {
+          if (!afkState.botInstance) return;
+
+          const bedBlock = bot.findBlock({
+            matching: (b) => b && b.name && b.name.includes('bed') && !b.name.includes('bedrock'),
+            maxDistance: 32
+          });
+
+          if (bedBlock) {
+            const dist = bot.entity.position.distanceTo(bedBlock.position);
+            this.log('success', `🛏️ [AFK BOT ${cleanName}] Phát hiện Giường '${bedBlock.name}' tại (${bedBlock.position.x}, ${bedBlock.position.y}, ${bedBlock.position.z}) (cách ${dist.toFixed(1)}m)!`);
+            afkState.bedPos = { x: bedBlock.position.x, y: bedBlock.position.y, z: bedBlock.position.z };
+          } else {
+            const pos = bot.entity ? bot.entity.position : null;
+            const posStr = pos ? `(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})` : 'chưa rõ';
+            this.log('warning', `⚠️ [AFK BOT ${cleanName}] Tại ${posStr} KHÔNG tìm thấy chiếc Giường nào trong bán kính 32m!`);
+          }
+
+          if (bot.time) {
+            const timeOfDay = normalizeTime(bot.time.timeOfDay || 0);
+            const isDay = isDayTime(timeOfDay);
+            if (!isDay) {
+              this.log('info', `🌙 [AFK BOT ${cleanName}] Hiện tại đang là BAN ĐÊM (${timeOfDay} ticks). Đang tiến hành đi ngủ qua đêm...`);
+              this.tryBotSleep(bot, cleanName, Date.now());
+            } else {
+              this.log('info', `☀️ [AFK BOT ${cleanName}] Hiện tại đang là BAN NGÀY (${timeOfDay} ticks). Sẵn sàng ngủ khi trời tối.`);
+            }
+          } else {
+            this.tryBotSleep(bot, cleanName, Date.now());
+          }
+        }, 2500);
 
         // Anti-AFK: Quay mặt & vẫy tay nhẹ mỗi 20 giây để duy trì kết nối
         afkState.antiAfkInterval = setInterval(() => {
@@ -381,21 +429,25 @@ class BotManager {
     this.timeListenerBots.add(bot);
 
     bot.on('time', () => {
-      const timeOfDay = normalizeTime(bot.time ? bot.time.timeOfDay : 0);
+      if (!bot.time) return;
+      const timeOfDay = normalizeTime(bot.time.timeOfDay || 0);
       const isDay = isDayTime(timeOfDay);
       
       const prevIsDay = this.timeKeeper.isDay;
       this.timeKeeper.timeOfDay = timeOfDay;
       this.timeKeeper.isDay = isDay;
 
-      // Xử lý khi bắt đầu Tối hoặc Sáng
+      // Xử lý khi tự động quản lý ban đêm
       if (this.timeKeeper.autoManageNight) {
-        if (prevIsDay && !isDay) {
-          this.log('warning', `🌙 Trời đã TỐI (time=${timeOfDay}). TimeKeeper [${bot.username}] vẫn treo ở The End; đang cho các builder thoát.`);
+        if (!isDay) {
+          // Nếu trời tối: Liên tục kiểm tra & cho Bot tìm giường đi ngủ ngay lập tức
+          if (prevIsDay) {
+            this.log('warning', `🌙 Trời đã TỐI (time=${timeOfDay}). Tiến hành cho Bot đi ngủ ngay lập tức (1 người ngủ qua đêm, Builder không out)...`);
+          }
           this.handleNightTime(bot);
         } else if (!prevIsDay && isDay) {
-          this.log('success', `☀️ Trời đã SÁNG (time=${timeOfDay}). Kết nối lại các builder đã tạm nghỉ ban đêm.`);
-          this.handleDayTime(bot);
+          this.log('success', `☀️ Trời đã SÁNG (time=${timeOfDay}).`);
+          this.handleDayTime();
         }
       }
 
@@ -545,72 +597,106 @@ class BotManager {
     this.broadcastState();
   }
 
-  // Khi TimeKeeper phát hiện TRỜI TỐI: Builder out server, AFK Overworld đi ngủ
-  async handleNightTime() {
-    this.log('warning', `🌙 [TIME KEEPER] Phát hiện TRỜI TỐI! Cho các Bot Builder ngắt kết nối và các Bot AFK Overworld đi ngủ...`);
-
-    for (const botKey of Object.keys(this.bots)) {
-      const state = this.bots[botKey];
-      if (!state) continue;
-
-      // 1. Bot Builders: Out server ban đêm
-      if (state.role === 'BUILDER') {
-        if (state.botInstance || state.status === 'BUILDING' || state.status === 'ONLINE') {
-          this.nightPausedBuilders.add(botKey);
-          this.log('info', `🌙 [NIGHT] Builder [${state.username}] out server tạm nghỉ ban đêm.`);
-          this.stopBotByRole(botKey);
-        }
-      } 
-      // 2. Bot AFK Overworld: Tìm giường và đi ngủ trong game
-      else if (state.role === 'AFK_OVERWORLD' && state.botInstance) {
-        try {
-          const bot = state.botInstance;
-          const bedBlock = bot.findBlock({
-            matching: (b) => b.name.includes('bed'),
-            maxDistance: 32
-          });
-
-          if (bedBlock) {
-            this.log('info', `🛌 [NIGHT] Bot AFK Overworld [${state.username}] tìm thấy giường tại ${bedBlock.position}, đang đi ngủ...`);
-            await bot.sleep(bedBlock);
-            state.status = 'SLEEPING';
-          } else {
-            this.log('warning', `⚠️ [NIGHT] Bot AFK Overworld [${state.username}] không tìm thấy giường gần đó để ngủ.`);
-          }
-        } catch (err) {
-          this.log('error', `❌ Bot AFK Overworld [${state.username}] gặp lỗi khi ngủ: ${err.message}`);
-        }
+  // Thử cho một bot đi ngủ nếu phát hiện giường gần đó (bán kính 32m)
+  async tryBotSleep(bot, username, now) {
+    if (!bot || !bot.entity || bot.isSleeping) {
+      if (bot && bot.isSleeping) {
+        this.log('info', `😴 [NIGHT] Bot [${username}] đã ở trạng thái ĐANG NGỦ.`);
       }
+      return;
     }
 
+    // Cooldown: Giới hạn thử ngủ tối đa 1 lần mỗi 3 giây cho từng bot để tránh spam exception
+    if (bot._lastSleepAttempt && (now - bot._lastSleepAttempt < 3000)) {
+      return;
+    }
+    bot._lastSleepAttempt = now;
+
+    try {
+      // Tìm khối Giường thật (loại trừ bedrock) trong bán kính 32m
+      const bedBlock = bot.findBlock({
+        matching: (b) => b && b.name && b.name.includes('bed') && !b.name.includes('bedrock'),
+        maxDistance: 32
+      });
+
+      if (!bedBlock) {
+        if (!bot._warnedNoBed) {
+          const pos = bot.entity ? bot.entity.position : null;
+          const posStr = pos ? `(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})` : 'chưa xác định';
+          this.log('warning', `⚠️ [NIGHT SCAN] Bot [${username}] tại ${posStr} KHÔNG tìm thấy chiếc Giường nào trong bán kính 32m để đi ngủ!`);
+          bot._warnedNoBed = true;
+        }
+        return;
+      }
+
+      const dist = bot.entity.position.distanceTo(bedBlock.position);
+      this.log('info', `🛌 [NIGHT] Bot [${username}] phát hiện Giường '${bedBlock.name}' tại (${bedBlock.position.x}, ${bedBlock.position.y}, ${bedBlock.position.z}) (cách ${dist.toFixed(1)}m). Đang tiến hành đi ngủ...`);
+
+      // Nếu ở xa hơn 3.5m, di chuyển lại gần giường trước khi ngủ
+      if (dist > 3.5 && bot.pathfinder) {
+        const { GoalNear } = require('mineflayer-pathfinder').goals;
+        try {
+          await bot.pathfinder.goto(new GoalNear(bedBlock.position.x, bedBlock.position.y, bedBlock.position.z, 2));
+        } catch (e) {
+          this.log('warning', `⚠️ [NIGHT] Bot [${username}] không thể lại gần Giường: ${e.message}`);
+        }
+      }
+
+      await bot.sleep(bedBlock);
+      this.log('success', `😴 [NIGHT SUCCESS] Bot [${username}] đã ngủ THÀNH CÔNG trên Giường (${bedBlock.position.x}, ${bedBlock.position.y}, ${bedBlock.position.z})! Skip Night thành công.`);
+    } catch (err) {
+      if (!bot.isSleeping && !err.message.includes('already sleeping')) {
+        this.log('warning', `⚠️ [NIGHT ERROR] Bot [${username}] thử đi ngủ gặp lỗi: ${err.message}`);
+      }
+    }
+  }
+
+  // Khi TimeKeeper phát hiện TRỜI TỐI: Cho Bot TimeKeeper, Bot Registered & tất cả Bot AFK đi ngủ liền
+  async handleNightTime(triggerBot = null) {
+    const now = Date.now();
+    const timeOfDay = this.timeKeeper ? this.timeKeeper.timeOfDay : 'unknown';
+    this.log('info', `🌙 [NIGHT EVENT] Trời tối (Tick: ${timeOfDay}). Chỉ Time Manager ngủ; Builder tiếp tục build 24/7.`);
+
+    // 1. Thử cho Bot TimeKeeper đi ngủ nếu đang kết nối
+    if (this.timeKeeper.botInstance && !this.timeKeeper.botInstance.isSleeping) {
+      this.tryBotSleep(this.timeKeeper.botInstance, this.timeKeeper.username, now);
+    }
+
+    // Builder và AFK tiếp tục hoạt động; tuyệt đối không đưa họ vào giường.
     this.timeKeeper.status = 'MONITORING';
     this.broadcastState();
   }
 
-  // Khi TimeKeeper phát hiện TRỜI SÁNG: AFK Overworld thức dậy, các Builder đăng nhập lại
+  // Khi TimeKeeper phát hiện TRỜI SÁNG: Đánh thức các Bot đang ngủ
   async handleDayTime() {
-    this.log('success', `☀️ [TIME KEEPER] Phát hiện TRỜI SÁNG! Cho các Bot AFK dậy và kết nối lại các Bot Builder...`);
+    this.log('success', `☀️ [TIME KEEPER] Trời đã SÁNG! Đánh thức các Bot đang ngủ...`);
 
-    // 1. Đánh thức các Bot AFK Overworld đang ngủ
+    // 1. Đánh thức Bot TimeKeeper nếu đang ngủ
+    if (this.timeKeeper.botInstance) {
+      this.timeKeeper.botInstance._warnedNoBed = false;
+      this.timeKeeper.botInstance._lastSleepAttempt = 0;
+      try {
+        if (this.timeKeeper.botInstance.isSleeping) {
+          await this.timeKeeper.botInstance.wake();
+          this.log('info', `☀️ [DAY] Bot TimeKeeper [${this.timeKeeper.username}] đã thức dậy.`);
+        }
+      } catch (err) {}
+    }
+
+    // 2. Đánh thức các Bot khác đang ngủ
     for (const botKey of Object.keys(this.bots)) {
       const state = this.bots[botKey];
-      if (state && state.role === 'AFK_OVERWORLD' && state.botInstance) {
+      if (state && state.botInstance) {
+        state.botInstance._warnedNoBed = false;
+        state.botInstance._lastSleepAttempt = 0;
         try {
           if (state.botInstance.isSleeping) {
             await state.botInstance.wake();
             state.status = 'ONLINE';
-            this.log('info', `☀️ [DAY] Bot AFK Overworld [${state.username}] đã thức dậy.`);
+            this.log('info', `☀️ [DAY] Bot [${state.username}] đã thức dậy.`);
           }
         } catch (err) {}
       }
-    }
-
-    // 2. Kết nối lại các Bot Builder đã out lúc trời tối
-    const toResume = Array.from(this.nightPausedBuilders);
-    this.nightPausedBuilders.clear();
-    for (const botKey of toResume) {
-      this.log('info', `☀️ [DAY] Cho Bot Builder [${this.bots[botKey]?.username || botKey}] đăng nhập lại server...`);
-      this.startBotByRole(botKey);
     }
 
     this.timeKeeper.status = 'MONITORING';
@@ -632,8 +718,22 @@ class BotManager {
       if (foundKey) botState = this.bots[foundKey];
     }
 
-    if (!botState || !botState.botInstance || !botState.botInstance.entity) {
-      return { success: false, error: 'Bot chưa kết nối vào game hoặc chưa được spawn!' };
+    const fixedAssignment = getBuilderAssignment(botState.username);
+    if (fixedAssignment) botState.assignedLetterId = fixedAssignment;
+
+    // 1. Ưu tiên giữ nguyên chữ cái đã gán sẵn cho Bot (Ví dụ: T1), không đè chữ ở xa
+    if (botState.assignedLetterId && this.pixelData.letters[botState.assignedLetterId]) {
+      const assignedLetter = this.pixelData.letters[botState.assignedLetterId];
+      botState.word = assignedLetter.word;
+      botState.label = assignedLetter.label;
+      botState.totalCount = assignedLetter.totalPixels;
+      botState.placedCount = assignedLetter.placedPixelsCount;
+      if (!botState.bedPos) botState.bedPos = assignedLetter.bed_pos;
+
+      const accountManager = require('./account_manager');
+      accountManager.saveAccount(botState);
+
+      return { success: true, detectedLetter: assignedLetter.label, letterId: assignedLetter.id };
     }
 
     const botPos = botState.botInstance.entity.position;
@@ -693,8 +793,33 @@ class BotManager {
   }
 
   startBot(letterId, accountCredentials = null) {
-    const botState = this.bots[letterId];
-    if (!botState) return;
+    let botState = this.bots[letterId];
+    if (!botState) {
+      const foundKey = Object.keys(this.bots).find(k => 
+        k === letterId || 
+        this.bots[k].username === letterId || 
+        this.bots[k].id === letterId ||
+        this.bots[k].assignedLetterId === letterId
+      );
+      if (foundKey) botState = this.bots[foundKey];
+    }
+
+    if (!botState) {
+      this.bots[letterId] = {
+        id: letterId,
+        username: (accountCredentials && accountCredentials.username) || letterId,
+        password: (accountCredentials && accountCredentials.password) || '1234',
+        role: 'BUILDER',
+        status: 'OFFLINE',
+        assignedLetterId: (accountCredentials && accountCredentials.assignedLetter !== 'AUTO') ? accountCredentials.assignedLetter : null,
+        placedCount: 0,
+        totalCount: 0,
+        bedPos: null,
+        shulkerId: null,
+        botInstance: null
+      };
+      botState = this.bots[letterId];
+    }
 
     if (botState.botInstance) {
       try { botState.botInstance.end(); } catch (e) {}
@@ -714,10 +839,9 @@ class BotManager {
     this.broadcastState();
 
     try {
-      let mcVersion = this.config.version;
-      // Nếu nhập 26.2 hoặc 1.20.2 hoặc không rõ, hỗ trợ auto-detect version
+      let mcVersion = this.config.version || '1.21.11';
       if (!mcVersion || mcVersion.includes('26.') || mcVersion === 'auto') {
-        mcVersion = false; // mineflayer auto-detect
+        mcVersion = '1.21.11';
       }
 
       const botOptions = {
@@ -757,6 +881,11 @@ class BotManager {
       };
 
       bot.on('spawn', () => {
+        // Bỏ qua event trễ từ một connection đã bị người dùng bấm Stop/thay thế.
+        if (botState.botInstance !== bot) {
+          try { bot.quit('Connection was stopped'); } catch (e) {}
+          return;
+        }
         this.log('success', `🎉 Bot [${botState.username}] đã vào server ${this.config.host}:${this.config.port} thành công!`);
         botState.status = 'IDLE';
 
@@ -775,15 +904,19 @@ class BotManager {
           } catch (e) {}
         }, 1200);
 
-        // 2. Nạp đúng ma trận pixel của chữ do người dùng đã gán rồi bắt đầu build.
+        // 2. Quét thế giới: Nhận chữ, in ra Giường, Shulker xung quanh và vẽ các block đã xây sẵn lên map
         setTimeout(() => {
-          if (!botState.botInstance) return;
-          if (this.config.autoBuild && this.timeKeeper.isDay) this.builderEngine.start(letterId);
-        }, 2500);
+          if (botState.botInstance !== bot) return;
+          this.scanWorldSurroundings(letterId);
+        }, 2200);
 
+        // 3. Cho bot đứng yên quét xong toàn bộ Shulker & Bed, check túi đồ rút Shulker rồi mới bắt đầu build (4.5 giây)
+        setTimeout(() => {
+          if (botState.botInstance !== bot) return;
+          if (this.config.autoBuild) this.builderEngine.start(letterId);
+        }, 4500);
 
         this.broadcastState();
-        this.setupBedSpawnpoint(letterId);
       });
 
       // Lắng hệ thống tín hiệu Auth khi server gửi chat
@@ -817,8 +950,10 @@ class BotManager {
       bot.on('end', () => {
         this.builderEngine.stop(letterId);
         this.log('info', `Bot [${botState.username}] đã ngắt kết nối.`);
-        botState.status = 'OFFLINE';
-        botState.botInstance = null;
+        if (botState.botInstance === bot) {
+          botState.status = 'OFFLINE';
+          botState.botInstance = null;
+        }
         this.broadcastState();
       });
 
@@ -830,17 +965,39 @@ class BotManager {
   }
 
   // Dừng bot
-  stopBot(letterId, options = {}) {
-    const botState = this.bots[letterId];
-    if (!botState) return;
-    this.builderEngine.stop(letterId);
-    if (botState && botState.botInstance) {
-      botState.botInstance.end();
-      botState.botInstance = null;
+  stopBot(botIdOrUsernameOrLetter, options = {}) {
+    const botKey = Object.keys(this.bots).find(key => {
+      const state = this.bots[key];
+      return key === botIdOrUsernameOrLetter ||
+        state.id === botIdOrUsernameOrLetter ||
+        state.username === botIdOrUsernameOrLetter ||
+        state.assignedLetterId === botIdOrUsernameOrLetter;
+    });
+    if (!botKey) return false;
+
+    const botState = this.bots[botKey];
+    this.builderEngine.stop(botKey);
+    if (botState.assignedLetterId && botState.assignedLetterId !== botKey) {
+      this.builderEngine.stop(botState.assignedLetterId);
+    }
+
+    const bot = botState.botInstance;
+    botState.botInstance = null;
+    if (bot) {
+      try {
+        if (typeof bot.quit === 'function') bot.quit('Stopped from dashboard');
+        else bot.end('Stopped from dashboard');
+      } catch (e) {
+        try { bot.end(); } catch (ignored) {}
+      }
     }
     botState.status = 'OFFLINE';
-    if (!options.keepNightResume) this.nightPausedBuilders.delete(letterId);
+    if (!options.keepNightResume) {
+      this.nightPausedBuilders.delete(botKey);
+      if (botState.assignedLetterId) this.nightPausedBuilders.delete(botState.assignedLetterId);
+    }
     this.broadcastState();
+    return true;
   }
 
   // Gửi lệnh Command / Chat tùy chỉnh trực tiếp từ Web Dashboard
@@ -880,12 +1037,8 @@ class BotManager {
     }
   }
 
-  // Khởi chạy toàn bộ 10 bot
+  // Khởi chạy toàn bộ bot
   startAllBots() {
-    if (!this.timeKeeper.isDay) {
-      this.log('warning', 'Không khởi động builder vì TimeKeeper đang báo trời tối.');
-      return;
-    }
     Object.keys(this.bots).forEach((letterId) => {
       this.startBot(letterId);
     });
@@ -915,7 +1068,7 @@ class BotManager {
 
     // Tìm khối Giường (bed) xung quanh trong bán kính 16 blocks
     const bedBlock = bot.findBlock({
-      matching: (block) => block && block.name && block.name.includes('bed'),
+      matching: (block) => block && block.name && block.name.includes('bed') && !block.name.includes('bedrock'),
       maxDistance: 16
     });
 
@@ -931,6 +1084,10 @@ class BotManager {
         y: bedBlock.position.y,
         z: bedBlock.position.z
       };
+
+      // Lưu bedPos vào MongoDB Atlas & đĩa JSON
+      const accountManager = require('./account_manager');
+      accountManager.saveAccount(botState);
 
       this.log('info', `🛏️ Bot [${botState.username}] đã phát hiện Giường tại (${bedBlock.position.x}, ${bedBlock.position.y}, ${bedBlock.position.z}). Đang tiến hành Set Spawnpoint...`);
 
@@ -958,20 +1115,144 @@ class BotManager {
     }
   }
 
+  // Quét môi trường xung quanh: Tự động nhận chữ cái theo tọa độ, tự Set Spawnpoint, in vị trí Bed/Shulker và vẽ các block đã xây sẵn lên Map
+  scanWorldSurroundings(letterId) {
+    const botState = this.bots[letterId];
+    if (!botState || !botState.botInstance) return;
+    const bot = botState.botInstance;
+
+    // 1. Tự động xác định chữ cái nhiệm vụ gần nhất dựa vào tọa độ thực tế (X, Z) của Bot trong Minecraft
+    this.autoDetectAndAssignNearestLetter(letterId);
+
+    const assignedLetterId = botState.assignedLetterId || letterId;
+    const letter = this.pixelData.letters[assignedLetterId];
+    if (!letter) {
+      this.log('warning', `⚠️ Bot [${botState.username}] chưa được gán ma trận chữ cái hợp lệ.`);
+      return;
+    }
+
+    this.log('info', `🤖 [BUILDER] Bot [${botState.username}] tự xác định & nhận nhiệm vụ xây chữ '${letter.word} - ${letter.label}' (ID: ${assignedLetterId}) tại tầng Y=${this.config.yLevel}`);
+
+    // 2. Quét & Tự động Set Spawnpoint tại Giường gần nhất (bán kính 32m)
+    try {
+      const bedBlock = bot.findBlock({
+        matching: (b) => b && b.name && b.name.includes('bed') && !b.name.includes('bedrock'),
+        maxDistance: 32
+      });
+
+      if (bedBlock) {
+        botState.bedPos = {
+          x: bedBlock.position.x,
+          y: bedBlock.position.y,
+          z: bedBlock.position.z
+        };
+        this.log('success', `🛏️ [SCANNER & SPAWN] Bot [${botState.username}] phát hiện Giường tại (${bedBlock.position.x}, ${bedBlock.position.y}, ${bedBlock.position.z}). Đang tiến hành tự động Set Spawnpoint...`);
+        
+        // Gọi hàm tự động bấm/ngủ Giường để lưu Spawnpoint
+        this.findAndSetBedSpawnpoint(letterId);
+        
+        // Lưu vị trí giường vào DB & Disk
+        const accountManager = require('./account_manager');
+        accountManager.saveAccount(botState);
+      } else {
+        this.log('info', `🛏️ Bot [${botState.username}] không tìm thấy Giường trong bán kính 32m để Set Spawn.`);
+      }
+    } catch (e) {}
+
+    // 3. Quét các vị trí Shulker Box xung quanh trong bán kính 5m (tối đa 30 rương) và đăng ký tự động vào Shulker Manager
+    try {
+      const shulkerPositions = bot.findBlocks({
+        matching: (b) => b && b.name && b.name.includes('shulker_box'),
+        maxDistance: 5,
+        count: 30
+      });
+
+      if (shulkerPositions && shulkerPositions.length > 0) {
+        this.log('success', `📦 [SCANNER] Bot [${botState.username}] phát hiện ${shulkerPositions.length} Shulker Box xung quanh!`);
+
+        shulkerPositions.forEach((pos, idx) => {
+          const sBlock = bot.blockAt(pos);
+          const blockName = sBlock ? sBlock.name : 'shulker_box';
+
+          const shulkerId = `shulker_${assignedLetterId}_${pos.x}_${pos.y}_${pos.z}`;
+          const shulkerData = {
+            id: shulkerId,
+            letterId: assignedLetterId,
+            name: `Rương Shulker ${assignedLetterId} (${pos.x}, ${pos.y}, ${pos.z})`,
+            blockType: this.config.buildBlock || 'black_concrete',
+            pos: { x: pos.x, y: pos.y, z: pos.z },
+            capacity: 1728,
+            remainingBlocks: 1728,
+            status: 'AVAILABLE'
+          };
+
+          shulkerManager.addShulker(shulkerData);
+        });
+
+        // Gán vị trí shulker đầu tiên cho botState
+        const firstPos = shulkerPositions[0];
+        botState.shulkerId = `shulker_${assignedLetterId}_${firstPos.x}_${firstPos.y}_${firstPos.z}`;
+        botState.shulkerPos = { x: firstPos.x, y: firstPos.y, z: firstPos.z };
+
+        this.log('success', `📦 [SCANNER MAP] Đã nạp thành công ${shulkerPositions.length} Shulker Boxes của chữ '${letter.label}' lên Map Dashboard!`);
+      } else {
+        this.log('info', `📦 Bot [${botState.username}] không thấy Shulker Box trong bán kính 32m.`);
+      }
+    } catch (e) {
+      this.log('error', `Lỗi khi quét Shulker Box: ${e.message}`);
+    }
+
+    // 4. Quét các block đã được xây sẵn trong thế giới Minecraft tại tầng Y=172 và vẽ lên Map Dashboard
+    try {
+      let scannedPlacedCount = 0;
+
+      // Quét bằng bot.findBlocks giống như tìm Shulker Box để đọc toàn bộ chunk đã nạp trong bộ nhớ mineflayer
+      const solidBlocks = bot.findBlocks({
+        matching: (b) => b && b.name && b.name !== 'air' && b.name !== 'cave_air' && b.name !== 'void_air' && b.type !== 0,
+        maxDistance: 45,
+        count: 5000
+      });
+
+      const solidSet = new Set(solidBlocks.map(p => `${p.x},${p.y},${p.z}`));
+
+      letter.pixels.forEach(pixel => {
+        const key = `${pixel.mc_x},${pixel.mc_y},${pixel.mc_z}`;
+        const targetPos = new vec3(pixel.mc_x, pixel.mc_y, pixel.mc_z);
+        const block = bot.blockAt(targetPos);
+        const isPlacedBlock = solidSet.has(key) || (block && block.name !== 'air' && block.name !== 'cave_air' && block.name !== 'void_air' && block.type !== 0);
+
+        if (isPlacedBlock) {
+          if (!pixel.placed) {
+            pixel.placed = true;
+            letter.placedPixelsCount++;
+          }
+          scannedPlacedCount++;
+        }
+      });
+
+      botState.placedCount = letter.placedPixelsCount;
+      botState.totalCount = letter.totalPixels;
+
+      this.log('success', `🎨 [SCANNER MAP] Đã vẽ xong bản đồ chữ '${letter.label}'! Quét phát hiện ${scannedPlacedCount}/${letter.totalPixels} block đã được đặt sẵn (kể cả pink_concrete hoặc khối khác) tại tầng Y=${this.config.yLevel}.`);
+      this.broadcastState();
+    } catch (e) {
+      this.log('error', `Lỗi khi quét block đã xây sẵn: ${e.message}`);
+    }
+  }
+
   // Thiết lập giường làm điểm Spawnpoint mặc định khi spawn
   async setupBedSpawnpoint(letterId) {
-
     const botState = this.bots[letterId];
-    const bot = botState.botInstance;
-    if (!bot) return;
+    if (!botState || !botState.botInstance || !botState.bedPos) return;
 
-    const bedPos = new vec3(botState.bedPos.x, botState.bedPos.y, botState.bedPos.z);
+    const bot = botState.botInstance;
     try {
+      const bedPos = new vec3(botState.bedPos.x, botState.bedPos.y, botState.bedPos.z);
       const bedBlock = bot.blockAt(bedPos);
-      if (bedBlock && bedBlock.name.includes('bed')) {
+      if (bedBlock && bedBlock.name.includes('bed') && !bedBlock.name.includes('bedrock')) {
         await bot.sleep(bedBlock);
         console.log(`[BOT ${botState.username}] Đã đặt Spawnpoint thành công tại Giường!`);
-        bot.wake();
+        try { bot.wake(); } catch (w) {}
       }
     } catch (e) {
       console.log(`[BOT ${botState.username}] Lưu ý: Không thể ngủ giường (có thể do thời gian ngày/đêm):`, e.message);
@@ -1108,11 +1389,22 @@ class BotManager {
     this.broadcastState();
   }
 
-  broadcastState() {
-    if (!this.io) return;
-
+  getState() {
     const summary = {};
     Object.keys(this.bots).forEach(id => {
+      const botInst = this.bots[id].botInstance;
+      let inventoryItems = [];
+      if (botInst && botInst.inventory) {
+        try {
+          inventoryItems = botInst.inventory.items().map(item => ({
+            name: item.name,
+            displayName: item.displayName || item.name,
+            count: item.count,
+            slot: item.slot
+          }));
+        } catch (e) {}
+      }
+
       summary[id] = {
         id: id,
         letterId: id,
@@ -1129,7 +1421,8 @@ class BotManager {
         simulating: this.bots[id].simulating,
         assignedLetterId: this.bots[id].assignedLetterId,
         detectedDistance: this.bots[id].detectedDistance,
-        connectedAt: this.bots[id].connectedAt || null
+        connectedAt: this.bots[id].connectedAt || null,
+        inventory: inventoryItems
       };
     });
 
@@ -1141,23 +1434,41 @@ class BotManager {
       };
     });
 
-    this.io.emit('state_update', {
+    const accountManager = require('./account_manager');
+
+    return {
       config: this.config,
       bots: summary,
       afkBots: afkSummary,
       timeKeeper: {
-        username: this.timeKeeper.username,
-        status: this.timeKeeper.status,
-        timeOfDay: this.timeKeeper.timeOfDay,
-        isDay: this.timeKeeper.isDay,
-        autoManageNight: this.timeKeeper.autoManageNight,
-        dimension: this.timeKeeper.dimension
+        username: this.timeKeeper ? this.timeKeeper.username : 'XinChiDungDi',
+        status: this.timeKeeper ? this.timeKeeper.status : 'OFFLINE',
+        timeOfDay: this.timeKeeper ? this.timeKeeper.timeOfDay : 0,
+        isDay: this.timeKeeper ? this.timeKeeper.isDay : true,
+        autoManageNight: this.timeKeeper ? this.timeKeeper.autoManageNight : true,
+        dimension: this.timeKeeper ? this.timeKeeper.dimension : 'unknown'
       },
-      shulkers: shulkerManager.getAllShulkers()
-    });
+      shulkers: shulkerManager.getAllShulkers(),
+      accounts: accountManager.getAllAccounts()
+    };
   }
 
+  broadcastState() {
+    if (!this.io) return;
+    this.io.emit('state_update', this.getState());
+  }
 
+  updateConfig(newFields) {
+    this.config = configManager.updateConfig(newFields);
+    if (newFields && newFields.timeKeeperUsername) {
+      this.timeKeeper.username = newFields.timeKeeperUsername;
+    }
+    if (newFields && newFields.autoManageNight !== undefined) {
+      this.timeKeeper.autoManageNight = !!newFields.autoManageNight;
+    }
+    this.broadcastState();
+    return this.config;
+  }
 }
 
 module.exports = new BotManager();

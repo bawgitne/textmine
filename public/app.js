@@ -33,8 +33,6 @@ function getCleanSymbol(item) {
 }
 
 function App() {
-  // Socket & State
-  const [socket, setSocket] = useState(null);
   const [activeTab, setActiveTab] = useState('bots'); // 'bots' | 'shulkers' | 'map' | 'canvas' | 'logs'
 
   // Data States
@@ -57,51 +55,45 @@ function App() {
   const [newAccPassword, setNewAccPassword] = useState('1234');
   const [logFilter, setLogFilter] = useState('all');
 
-  // Initialize Socket.io Connection
-  useEffect(() => {
-    const s = io();
-    setSocket(s);
-
-    s.on('connect', () => {
-      console.log('[WEBSOCKET] Connected to Server!');
-    });
-
-    s.on('init_data', (data) => {
-      setPixelData(data);
-    });
-
-    s.on('state_update', (state) => {
-      if (state.bots) setBotsData(state.bots);
-      if (state.shulkers) setShulkersData(state.shulkers);
-      if (state.accounts) setAccountsData(state.accounts);
-      if (state.timeKeeper) setTimeKeeperState(state.timeKeeper);
-    });
-
-    s.on('initial_logs', (initialLogs) => {
-      setLogs(initialLogs || []);
-    });
-
-    s.on('system_log', (logEntry) => {
-      setLogs(prev => [...prev.slice(-300), logEntry]);
-    });
-
-    s.on('pixel_update', ({ pixelIndex, placed }) => {
-      setPixelData(prev => {
-        if (!prev) return prev;
-        const updated = { ...prev };
-        Object.keys(updated.letters).forEach(lId => {
-          const l = updated.letters[lId];
-          const px = l.pixels.find(p => p.index === pixelIndex);
-          if (px) {
-            px.placed = placed;
-            l.placedPixelsCount = l.pixels.filter(p => p.placed).length;
-          }
-        });
-        return updated;
+  const sendAction = async (action, payload) => {
+    try {
+      const res = await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payload })
       });
-    });
+      return await res.json();
+    } catch (e) {
+      console.error('Lỗi thực thi API action:', e);
+    }
+  };
 
-    return () => s.disconnect();
+  // REST API Polling định kỳ mỗi 1.5s
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [stateRes, logsRes, pixelsRes] = await Promise.all([
+          fetch('/api/state').then(r => r.ok ? r.json() : null),
+          fetch('/api/logs').then(r => r.ok ? r.json() : null),
+          fetch('/api/pixels').then(r => r.ok ? r.json() : null)
+        ]);
+
+        if (stateRes) {
+          if (stateRes.bots) setBotsData(stateRes.bots);
+          if (stateRes.shulkers) setShulkersData(stateRes.shulkers);
+          if (stateRes.accounts) setAccountsData(stateRes.accounts);
+          if (stateRes.timeKeeper) setTimeKeeperState(stateRes.timeKeeper);
+        }
+        if (logsRes) setLogs(logsRes);
+        if (pixelsRes) setPixelData(pixelsRes);
+      } catch (e) {
+        console.error('Polling error:', e);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 1500);
+    return () => clearInterval(interval);
   }, []);
 
   // Action Menu Handlers
@@ -109,25 +101,21 @@ function App() {
     setActiveMenuId(activeMenuId === botId ? null : botId);
   };
 
-  // Role & Execution Handlers
+  // Role & Execution Handlers via REST API
   const handleSetRole = (botId, role) => {
-    if (!socket) return;
-    socket.emit('set_bot_role', { botId, role });
+    sendAction('set_bot_role', { botId, role });
   };
 
   const handleStartBot = (botId) => {
-    if (!socket) return;
-    socket.emit('start_bot_role', botId);
+    sendAction('start_bot_role', botId);
   };
 
   const handleStopBot = (botId) => {
-    if (!socket) return;
-    socket.emit('stop_bot_role', botId);
+    sendAction('stop_bot_role', botId);
   };
 
   const handleDeleteBot = (botId) => {
-    if (!socket) return;
-    socket.emit('delete_bot_account', botId);
+    sendAction('delete_bot_account', botId);
   };
 
   // Add Account via Modal
@@ -202,11 +190,19 @@ function App() {
           </button>
 
           <button 
+            class={`chakra-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={() => setActiveTab('inventory')}
+          >
+            <i class="fa-solid fa-briefcase"></i>
+            <span>5. Túi Đồ Bot (Inventory)</span>
+          </button>
+
+          <button 
             class={`chakra-nav-item ${activeTab === 'logs' ? 'active' : ''}`}
             onClick={() => setActiveTab('logs')}
           >
             <i class="fa-solid fa-terminal"></i>
-            <span>5. Live Console Log</span>
+            <span>6. Live Console Log</span>
           </button>
         </nav>
       </aside>
@@ -267,6 +263,13 @@ function App() {
           {activeTab === 'canvas' && (
             <CanvasMapTab 
               pixelData={pixelData} 
+            />
+          )}
+
+          {activeTab === 'inventory' && (
+            <InventoryTab 
+              botsData={botsData}
+              pixelData={pixelData}
             />
           )}
 
@@ -435,7 +438,7 @@ function BotManagerTab({
                   const b = botsData[bKey];
                   const symbol = getCleanSymbol(b);
                   const isMenuOpen = activeMenuId === bKey;
-                  const isOnline = b.status === 'ONLINE' || b.status === 'BUILDING' || b.status === 'MONITORING' || b.status === 'SLEEPING';
+                  const isOnline = b.status && b.status !== 'OFFLINE' && b.status !== 'FINISHED' && b.status !== 'ERROR';
                   const uptimeText = isOnline ? formatUptime(b.connectedAt || Date.now()) : 'OFFLINE';
 
                   return (
@@ -609,7 +612,7 @@ function ShulkerManagerTab({ shulkersData }) {
                     <td><strong>{s.name || s.id}</strong></td>
                     <td><span class="chakra-badge chakra-badge-blue" style={{ fontSize: '0.95rem', fontWeight: 800 }}>{symbol}</span></td>
                     <td>{s.blockType}</td>
-                    <td>({s.pos?.x || 0}, {s.pos?.y || 250}, {s.pos?.z || 0})</td>
+                    <td>({s.pos?.x || 0}, {s.pos?.y || 172}, {s.pos?.z || 0})</td>
                     <td><strong>{s.remainingBlocks}</strong> / {s.initialCapacity}</td>
                     <td>
                       <span class={`chakra-badge ${isAvailable ? 'chakra-badge-green' : 'chakra-badge-red'}`}>
@@ -629,6 +632,167 @@ function ShulkerManagerTab({ shulkersData }) {
 
 // ==========================================================================
 // TAB 3: SHULKER MAP & BED UI (HIỂN THỊ TỪNG KÝ TỰ T, H, Ấ, T, N, G, H, I, Ệ, P)
+// Global Cache nạp ảnh Minecraft texture
+const textureCache = {};
+function getLoadedTexture(src) {
+  if (!textureCache[src]) {
+    const img = new Image();
+    img.src = src;
+    textureCache[src] = img;
+  }
+  return textureCache[src];
+}
+
+// ==========================================================================
+// COMPONENT VẼ ĐỒ HỌA TỌA ĐỘ KHÔNG GIAN GIƯỜNG (2 BLOCKS) & RƯƠNG SHULKER TEXTURE
+// ==========================================================================
+function SpatialShulkerMapCanvas({ letter, botState, shulkers }) {
+  const canvasRef = useRef(null);
+
+  const bedX = botState.bedPos?.x ?? letter.bed_pos?.x ?? 0;
+  const bedZ = botState.bedPos?.z ?? letter.bed_pos?.z ?? 0;
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    // Pre-load các file texture thực tế từ thư mục /texture/
+    const bedHeadImg = getLoadedTexture('/texture/orange_bed_head_up.png');
+    const bedFootImg = getLoadedTexture('/texture/orange_bed_foot_up.png');
+    const greenShulkerImg = getLoadedTexture('/texture/green_shulker_box.png');
+    const redShulkerImg = getLoadedTexture('/texture/red_shulker_box.png');
+
+    const renderCanvas = () => {
+      const width = 280;
+      const height = 210;
+      canvas.width = width;
+      canvas.height = height;
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      let maxOffset = 5;
+      shulkers.forEach(s => {
+        if (!s.pos) return;
+        const dx = Math.abs(Math.round(s.pos.x - bedX));
+        const dz = Math.abs(Math.round(s.pos.z - bedZ));
+        if (dx > maxOffset) maxOffset = dx;
+        if (dz > maxOffset) maxOffset = dz;
+      });
+
+      const gridStep = Math.max(14, Math.min(18, Math.floor((Math.min(width, height) / 2 - 18) / Math.max(5, maxOffset))));
+
+      // Background
+      ctx.fillStyle = '#0B0F17';
+      ctx.fillRect(0, 0, width, height);
+
+      // Grid lines
+      ctx.strokeStyle = '#1A202C';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Bán kính quét 5 blocks
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 5 * gridStep, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(79, 209, 197, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Tắt khử răng cưa để hiển thị ảnh texture chuẩn Minecraft pixel-art
+      ctx.imageSmoothingEnabled = false;
+
+      // 1. VẼ GIƯỜNG (BED) ĐỦ 2 BLOCKS (HEAD + FOOT)
+      // Block 1: Head of Bed (Đầu Giường) tại (centerX - gridStep/2, centerY - gridStep)
+      const headX = centerX - gridStep / 2;
+      const headY = centerY - gridStep;
+      if (bedHeadImg.complete && bedHeadImg.naturalWidth !== 0) {
+        ctx.drawImage(bedHeadImg, headX, headY, gridStep, gridStep);
+      } else {
+        ctx.fillStyle = '#E53E3E';
+        ctx.fillRect(headX, headY, gridStep, gridStep);
+      }
+
+      // Block 2: Foot of Bed (Chân Giường) tại (centerX - gridStep/2, centerY)
+      const footX = centerX - gridStep / 2;
+      const footY = centerY;
+      if (bedFootImg.complete && bedFootImg.naturalWidth !== 0) {
+        ctx.drawImage(bedFootImg, footX, footY, gridStep, gridStep);
+      } else {
+        ctx.fillStyle = '#C53030';
+        ctx.fillRect(footX, footY, gridStep, gridStep);
+      }
+
+      // 2. VẼ RƯƠNG SHULKER BOX VỚI TEXTURE THỰC TẾ (/texture/green_shulker_box.png & red_shulker_box.png)
+      shulkers.forEach((s, idx) => {
+        if (!s.pos) return;
+        const offsetX = Math.round(s.pos.x - bedX);
+        const offsetZ = Math.round(s.pos.z - bedZ);
+
+        const drawX = centerX + offsetX * gridStep - gridStep / 2;
+        const drawY = centerY + offsetZ * gridStep - gridStep / 2;
+
+        const hasItems = (s.remainingBlocks === undefined || s.remainingBlocks > 0);
+        const textureImg = hasItems ? greenShulkerImg : redShulkerImg;
+
+        // Aura phát sáng quanh rương
+        ctx.fillStyle = hasItems ? 'rgba(72, 187, 120, 0.35)' : 'rgba(245, 101, 101, 0.35)';
+        ctx.fillRect(drawX - 2, drawY - 2, gridStep + 4, gridStep + 4);
+
+        // Vẽ ảnh Texture Rương Shulker
+        if (textureImg.complete && textureImg.naturalWidth !== 0) {
+          ctx.drawImage(textureImg, drawX, drawY, gridStep, gridStep);
+        } else {
+          ctx.fillStyle = hasItems ? '#38A169' : '#E53E3E';
+          ctx.fillRect(drawX, drawY, gridStep, gridStep);
+        }
+
+        // Số thứ tự rương
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`${idx + 1}`, drawX + gridStep / 2, drawY + gridStep / 2 + 3.5);
+        ctx.shadowBlur = 0;
+      });
+    };
+
+    renderCanvas();
+
+    // Re-render khi ảnh texture nạp xong vào trình duyệt
+    [bedHeadImg, bedFootImg, greenShulkerImg, redShulkerImg].forEach(img => {
+      if (!img.complete) {
+        img.onload = renderCanvas;
+      }
+    });
+  }, [bedX, bedZ, shulkers]);
+
+  return (
+    <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+      <div style={{ fontSize: '0.75rem', color: '#4FD1C5', marginBottom: '0.25rem', fontWeight: 700 }}>
+        🗺️ Bản Đồ Vị Trí Shulker Boxes (Bán kính 5m)
+      </div>
+      <canvas ref={canvasRef} style={{ width: '100%', maxWidth: '280px', height: 'auto', borderRadius: '8px', border: '1px solid #2D3748', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}></canvas>
+    </div>
+  );
+}
+
+// ==========================================================================
+// TAB 3: SHULKER BED MAP TAB COMPONENT
 // ==========================================================================
 function ShulkerBedMapTab({ pixelData, shulkersData, botsData }) {
   const letters = pixelData?.letters || {};
@@ -658,10 +822,33 @@ function ShulkerBedMapTab({ pixelData, shulkersData, botsData }) {
           {Object.keys(letters).map((letterId) => {
             const letter = letters[letterId];
             const symbol = getCleanSymbol({ ...letter, id: letterId });
-            const botState = botsData[letterId] || {};
+            const botState = Object.values(botsData).find(b => b.assignedLetterId === letterId || b.id === letterId || b.letterId === letterId) || botsData[letterId] || {};
             
-            // Filter shulkers associated with this letter
-            const letterShulkers = shulkersData.filter(s => s.letterId === letterId);
+            // Tọa độ Bed làm mốc
+            const bedX = botState.bedPos?.x ?? letter.bed_pos?.x;
+            const bedZ = botState.bedPos?.z ?? letter.bed_pos?.z;
+
+            // Lọc rương Shulker thuộc chữ này (Bán kính <= 5m tính từ Bed)
+            const letterShulkers = shulkersData.filter(s => {
+              if (!s.pos) return false;
+              if (s.letterId === letterId) return true;
+              if (bedX !== undefined && bedZ !== undefined) {
+                const dist = Math.sqrt(Math.pow(s.pos.x - bedX, 2) + Math.pow(s.pos.z - bedZ, 2));
+                return dist <= 5; // Bán kính chuẩn 5m
+              }
+              return false;
+            });
+
+            // Nếu bot quét được shulkerPos trực tiếp in-game
+            const displayShulkers = [...letterShulkers];
+            if (botState.shulkerPos && !displayShulkers.some(s => s.pos && s.pos.x === botState.shulkerPos.x && s.pos.z === botState.shulkerPos.z)) {
+              displayShulkers.push({
+                id: `in_game_${letterId}`,
+                name: `Rương Quét In-Game (${botState.username})`,
+                pos: botState.shulkerPos,
+                remainingBlocks: 1728
+              });
+            }
 
             return (
               <div key={letterId} class="bed-map-card">
@@ -674,47 +861,18 @@ function ShulkerBedMapTab({ pixelData, shulkersData, botsData }) {
                     </div>
                     <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4FD1C5', marginLeft: '0.25rem' }}>{symbol}</span>
                   </div>
-                  <span class={`chakra-badge ${botState.status === 'BUILDING' ? 'chakra-badge-green' : 'chakra-badge-purple'}`}>
+                  <span class={`chakra-badge ${(botState.status && botState.status !== 'OFFLINE') ? 'chakra-badge-green' : 'chakra-badge-purple'}`}>
                     {botState.username || 'Bot Chưa Gán'}
                   </span>
                 </div>
 
                 <div style={{ fontSize: '0.85rem', color: '#CBD5E0' }}>
-                  📍 Tọa độ Bed: <strong>({letter.bed_pos?.x}, {letter.bed_pos?.y}, {letter.bed_pos?.z})</strong>
+                  📍 Tọa độ Bed: <strong>({botState.bedPos?.x ?? letter.bed_pos?.x}, {botState.bedPos?.y ?? letter.bed_pos?.y}, {botState.bedPos?.z ?? letter.bed_pos?.z})</strong>
+                  {botState.bedPos && <span class="chakra-badge chakra-badge-green" style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>Đã Quét In-Game</span>}
                 </div>
 
-                {/* Nearby Shulkers List */}
-                <div class="shulkers-list-container">
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A0AEC0', textTransform: 'uppercase' }}>
-                    Shulker Boxes Gần Bed:
-                  </div>
-
-                  {letterShulkers.length === 0 ? (
-                    <div style={{ fontSize: '0.85rem', color: '#718096', fontStyle: 'italic' }}>
-                      Chưa có Shulker Box nào được quét gần Bed này.
-                    </div>
-                  ) : (
-                    letterShulkers.map(s => {
-                      const hasItems = s.remainingBlocks > 0;
-                      const textureSrc = hasItems ? '/texture/green_shulker_box.png' : '/texture/red_shulker_box.png';
-
-                      return (
-                        <div key={s.id} class={`shulker-box-ui ${hasItems ? 'status-green' : 'status-red'}`}>
-                          <div class="shulker-info">
-                            <span class="shulker-name" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <img src={textureSrc} style={{ width: '22px', height: '22px', imageRendering: 'pixelated' }} alt="Shulker Box" />
-                              {s.name || s.id}
-                            </span>
-                            <span class="shulker-coords">📍 ({s.pos?.x}, {s.pos?.y}, {s.pos?.z})</span>
-                          </div>
-                          <div>
-                            <strong>{s.remainingBlocks}</strong>/1728
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                {/* Bản đồ Đồ Họa Tọa Độ Không Gian Shulker & Bed (Tọa độ 1:1 chuẩn ô lưới) */}
+                <SpatialShulkerMapCanvas letter={letter} botState={botState} shulkers={displayShulkers} />
               </div>
             );
           })}
@@ -735,8 +893,8 @@ function CanvasMapTab({ pixelData }) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
 
-    const width = pixelData.canvasWidth || 1200;
-    const height = pixelData.canvasHeight || 400;
+    const width = 1200;
+    const height = 480;
 
     canvas.width = width;
     canvas.height = height;
@@ -745,37 +903,150 @@ function CanvasMapTab({ pixelData }) {
     ctx.fillStyle = '#111827';
     ctx.fillRect(0, 0, width, height);
 
+    // Tỷ lệ scale dựa trên kích thước gốc của ảnh (1800 x 800)
+    const scaleX = width / 1800;
+    const scaleY = height / 800;
+
     // Draw pixels
     if (pixelData.letters) {
       Object.values(pixelData.letters).forEach(l => {
         if (l.pixels) {
           l.pixels.forEach(p => {
-            ctx.fillStyle = p.placed ? '#48BB78' : '#2D3748';
-            ctx.fillRect(p.x * 4, p.y * 4, 3, 3);
+            const x = (p.img_x !== undefined ? p.img_x : (p.x || 0)) * scaleX;
+            const y = (p.img_y !== undefined ? p.img_y : (p.y || 0)) * scaleY;
+
+            ctx.fillStyle = p.placed ? '#48BB78' : '#374151';
+            ctx.fillRect(x, y, 2.5, 2.5);
           });
         }
       });
     }
   }, [pixelData]);
 
+  let totalPixels = 0;
+  let placedPixels = 0;
+  if (pixelData && pixelData.letters) {
+    Object.values(pixelData.letters).forEach(l => {
+      totalPixels += l.totalPixels || 0;
+      placedPixels += l.placedPixelsCount || 0;
+    });
+  }
+
   return (
     <div class="chakra-card">
       <div class="chakra-card-header">
         <span class="chakra-card-title">
           <i class="fa-solid fa-border-all" style={{ color: '#4FD1C5' }}></i>
-          Bản Đồ Block Đã Đặt Real-Time (Text THẤT NGHIỆP)
+          Bản Đồ Block Đã Đặt Real-Time (Text THẤT NGHIỆP - Tầng Y=172)
         </span>
+        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
+          <span class="chakra-badge chakra-badge-green">
+            🟢 Đã xây: {placedPixels.toLocaleString()} blocks
+          </span>
+          <span class="chakra-badge chakra-badge-purple">
+            ⚪ Chưa xây: {(totalPixels - placedPixels).toLocaleString()} blocks
+          </span>
+        </div>
       </div>
 
-      <div class="canvas-wrapper">
-        <canvas ref={canvasRef} id="pixel-canvas"></canvas>
+      <div class="canvas-wrapper" style={{ display: 'flex', justifyContent: 'center', backgroundColor: '#0D1117', padding: '1rem', borderRadius: '8px' }}>
+        <canvas ref={canvasRef} id="pixel-canvas" style={{ borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}></canvas>
       </div>
     </div>
   );
 }
 
 // ==========================================================================
-// TAB 5: LIVE CONSOLE LOG TAB COMPONENT
+// TAB 5: INVENTORY TAB COMPONENT (TÚI ĐỒ REALTIME CỦA BOT BUILDER)
+// ==========================================================================
+function InventoryTab({ botsData, pixelData }) {
+  const letters = pixelData?.letters || {};
+
+  return (
+    <div>
+      <div class="chakra-card">
+        <div class="chakra-card-header">
+          <span class="chakra-card-title">
+            <i class="fa-solid fa-briefcase" style={{ color: '#4FD1C5' }}></i>
+            Túi Đồ In-Game Realtime Của Các Bot Builder (Ký Tự THẤT NGHIỆP)
+          </span>
+        </div>
+
+        <div class="shulker-map-grid">
+          {Object.keys(letters).map((letterId) => {
+            const letter = letters[letterId];
+            const symbol = getCleanSymbol({ ...letter, id: letterId });
+            const botState = Object.values(botsData).find(b => b.assignedLetterId === letterId || b.id === letterId || b.letterId === letterId) || botsData[letterId] || {};
+            const items = botState.inventory || [];
+            const isOnline = botState.status && botState.status !== 'OFFLINE';
+
+            return (
+              <div key={letterId} class="bed-map-card" style={{ background: '#111827', padding: '1rem', borderRadius: '12px', border: '1px solid #2D3748' }}>
+                <div class="bed-header" style={{ marginBottom: '0.75rem', borderBottom: '1px solid #2D3748', paddingBottom: '0.5rem' }}>
+                  <div class="bed-title">
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#4FD1C5' }}>{symbol}</span>
+                    <span style={{ fontSize: '0.9rem', color: '#A0AEC0', marginLeft: '0.5rem', fontWeight: 600 }}>
+                      {botState.username || 'Bot Chưa Gán'}
+                    </span>
+                  </div>
+                  <span class={`chakra-badge ${isOnline ? 'chakra-badge-green' : 'chakra-badge-purple'}`}>
+                    {botState.status || 'OFFLINE'}
+                  </span>
+                </div>
+
+                {/* Minecraft 36-Slot Inventory Grid (4 rows x 9 columns) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '4px', background: '#0D1117', padding: '8px', borderRadius: '8px', border: '1px solid #2D3748' }}>
+                  {Array.from({ length: 36 }).map((_, slotIdx) => {
+                    const item = items.find(i => i.slot === slotIdx || i.slot === (slotIdx < 9 ? slotIdx + 36 : slotIdx));
+                    const isConcrete = item && item.name.includes('concrete');
+
+                    return (
+                      <div
+                        key={slotIdx}
+                        title={item ? `${item.displayName || item.name} (x${item.count})` : `Slot ${slotIdx + 1}`}
+                        style={{
+                          width: '100%',
+                          aspectRatio: '1/1',
+                          background: item ? (isConcrete ? 'rgba(72, 187, 120, 0.25)' : '#1F2937') : '#161E2E',
+                          border: item ? (isConcrete ? '1px solid #38A169' : '1px solid #4A5568') : '1px solid #2D3748',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {item ? (
+                          <>
+                            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: isConcrete ? '#48BB78' : '#E2E8F0', textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '95%' }}>
+                              {item.name.replace('_concrete', '').replace('pink', '🌸 Pink')}
+                            </span>
+                            <span style={{ position: 'absolute', bottom: '1px', right: '3px', fontWeight: 800, color: '#FFF', fontSize: '0.65rem', textShadow: '1px 1px 2px #000' }}>
+                              {item.count}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: '0.75rem', color: '#A0AEC0', marginTop: '0.5rem', textAlign: 'right', fontWeight: 600 }}>
+                  📦 Tổng item: <strong style={{ color: '#4FD1C5' }}>{items.reduce((acc, curr) => acc + (curr.count || 0), 0)}</strong> block
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// TAB 6: LIVE CONSOLE LOG TAB COMPONENT
 // ==========================================================================
 function ConsoleLogTab({ logs, logFilter, setLogFilter, onClearLogs }) {
   const filteredLogs = logs.filter(l => {

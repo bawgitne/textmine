@@ -7,7 +7,15 @@ function squaredDistance2D(a, b) {
 }
 
 function distanceToLetter(position, letter) {
-  if (!letter || !Array.isArray(letter.pixels) || letter.pixels.length === 0) {
+  if (!letter) return Infinity;
+
+  // 1. Ưu tiên tính khoảng cách tới vị trí Giường (bed_pos) của chữ cái
+  if (letter.bed_pos && letter.bed_pos.x !== undefined && letter.bed_pos.z !== undefined) {
+    return Math.sqrt(squaredDistance2D(position, letter.bed_pos));
+  }
+
+  // 2. Nếu chưa có bed_pos, tính khoảng cách tới pixel gần nhất
+  if (!Array.isArray(letter.pixels) || letter.pixels.length === 0) {
     return Infinity;
   }
 

@@ -1,22 +1,17 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
 const path = require('path');
 
-const { connectDB } = require('./src/db');
+const { connectDB, getIsDBConnected } = require('./src/db');
 const pixelEngine = require('./src/pixel_engine');
 const shulkerManager = require('./src/shulker_manager');
 const accountManager = require('./src/account_manager');
+const progressManager = require('./src/progress_manager');
+const configManager = require('./src/config_manager');
 const botManager = require('./src/bot_manager');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
 
 // Railway cấp biến PORT tự động
 const PORT = process.env.PORT || 3000;
@@ -28,13 +23,24 @@ app.use('/texture', express.static(path.join(__dirname, 'texture')));
 // Biến lưu trữ pixel data nạp từ ảnh
 let globalPixelData = null;
 
-// Route API kiểm tra sức khỏe server
+// Route API kiểm tra sức khỏe server & trạng thái DB
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
+    database: getIsDBConnected() ? 'ONLINE (MongoDB Atlas)' : 'OFFLINE (Local JSON Fallback)',
     uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
+});
+
+// Route lấy toàn bộ trạng thái hệ thống
+app.get('/api/state', (req, res) => {
+  res.json(botManager.getState());
+});
+
+// Route lấy danh sách log hệ thống
+app.get('/api/logs', (req, res) => {
+  res.json(botManager.logs || []);
 });
 
 // Route API Tài khoản (Accounts)
@@ -62,7 +68,6 @@ app.get('/api/pixels', (req, res) => {
   res.json(globalPixelData);
 });
 
-
 // Route lấy danh sách Shulker Box
 app.get('/api/shulkers', (req, res) => {
   res.json(shulkerManager.getAllShulkers());
@@ -89,171 +94,128 @@ app.delete('/api/shulkers/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Socket.io Realtime Events
-io.on('connection', (socket) => {
-  console.log(`[WEBSOCKET] Client kết nối: ${socket.id}`);
-
-  // Gửi toàn bộ trạng thái hiện tại và lịch sử log khi client mở trang web
-  if (globalPixelData) {
-    socket.emit('init_data', globalPixelData);
-  }
-  socket.emit('initial_logs', botManager.logs || []);
-  botManager.broadcastState();
-
-
-  // Sự kiện từ Dashboard Web
-  socket.on('login_account_bot', (accData) => {
-    const result = botManager.startAccountBot(accData);
-    socket.emit('login_account_bot_result', result);
-  });
-
-  socket.on('auto_detect_nearest', (letterId) => {
-    const result = botManager.autoDetectAndAssignNearestLetter(letterId);
-    socket.emit('auto_detect_result', result);
-  });
-
-  socket.on('set_bed_spawnpoint', async (letterId) => {
-    const result = await botManager.findAndSetBedSpawnpoint(letterId);
-    socket.emit('set_bed_spawnpoint_result', result);
-  });
-
-  socket.on('send_bot_command', ({ botId, command }) => {
-    const result = botManager.sendCustomCommand(botId, command);
-    socket.emit('send_bot_command_result', result);
-  });
-
-  socket.on('start_bot', (letterId) => {
-    // Mỗi thẻ builder đã đại diện cho một chữ do người dùng chọn.
-    botManager.startBot(letterId);
-  });
-
-
-  socket.on('stop_bot', (letterId) => {
-    botManager.stopBot(letterId);
-  });
-
-  socket.on('start_time_keeper', (customUsername) => {
-    botManager.startTimeKeeper(customUsername);
-  });
-
-  socket.on('stop_time_keeper', () => {
-    botManager.stopTimeKeeper();
-  });
-
-  socket.on('update_tk_username', (newUsername) => {
-    if (newUsername && typeof newUsername === 'string' && newUsername.trim()) {
-      botManager.timeKeeper.username = newUsername.trim();
-      botManager.broadcastState();
-    }
-  });
-
-  socket.on('update_builder_username', ({ letterId, username }) => {
-    botManager.updateBuilderUsername(letterId, username);
-  });
-
-
-  socket.on('set_bot_role', ({ botId, role }) => {
-    botManager.setBotRole(botId, role);
-  });
-
-  socket.on('start_bot_role', (botId) => {
-    botManager.startBotByRole(botId);
-  });
-
-  socket.on('stop_bot_role', (botId) => {
-    botManager.stopBotByRole(botId);
-  });
-
-  socket.on('delete_bot_account', (botId) => {
-    botManager.deleteBotAccount(botId);
-  });
-
-  socket.on('set_time_keeper', (botId) => {
-    const result = botManager.setTimeKeeperBot(botId);
-    socket.emit('set_time_keeper_result', result);
-  });
-
-  socket.on('toggle_auto_night', (enabled) => {
-    botManager.timeKeeper.autoManageNight = enabled;
-    botManager.broadcastState();
-  });
-
-
-  socket.on('add_afk_bot', (username) => {
-    botManager.addAfkBot(username);
-  });
-
-  socket.on('remove_afk_bot', (username) => {
-    botManager.removeAfkBot(username);
-  });
-
-  socket.on('update_builder_username', (data) => {
-    if (data && data.letterId && data.username) {
-      botManager.updateBuilderUsername(data.letterId, data.username);
-    }
-  });
-
-  socket.on('start_all_bots', () => {
-    botManager.startAllBots();
-  });
-
-
-
-  socket.on('stop_all_bots', () => {
-    botManager.stopAllBots();
-  });
-
-  socket.on('toggle_simulation', (letterId) => {
-    botManager.toggleSimulation(letterId);
-  });
-
-  socket.on('start_all_simulations', () => {
-    botManager.startAllSimulations();
-  });
-
-  socket.on('stop_all_simulations', () => {
-    botManager.stopAllSimulations();
-  });
-
-  socket.on('update_config', (newConfig) => {
-    botManager.updateConfig(newConfig);
-  });
-
-  socket.on('reset_progress', async () => {
-    if (globalPixelData) {
-      Object.keys(globalPixelData.letters).forEach((id) => {
-        const letter = globalPixelData.letters[id];
-        letter.placedPixelsCount = 0;
-        letter.pixels.forEach(p => p.placed = false);
-        if (botManager.bots[id]) {
-          botManager.bots[id].placedCount = 0;
-          botManager.bots[id].status = 'OFFLINE';
+// Route xử lý toàn bộ các thao tác/hành động điều khiển REST API
+app.post('/api/action', async (req, res) => {
+  const { action, payload } = req.body || {};
+  try {
+    let result = { success: true };
+    switch (action) {
+      case 'login_account_bot':
+        result = botManager.startAccountBot(payload);
+        break;
+      case 'auto_detect_nearest':
+        result = botManager.autoDetectAndAssignNearestLetter(payload);
+        break;
+      case 'set_bed_spawnpoint':
+        result = await botManager.findAndSetBedSpawnpoint(payload);
+        break;
+      case 'send_bot_command':
+        result = botManager.sendCustomCommand(payload.botId, payload.command);
+        break;
+      case 'start_bot':
+        botManager.startBot(payload);
+        break;
+      case 'stop_bot':
+        botManager.stopBot(payload);
+        break;
+      case 'start_time_keeper':
+        botManager.startTimeKeeper(payload);
+        break;
+      case 'stop_time_keeper':
+        botManager.stopTimeKeeper();
+        break;
+      case 'update_tk_username':
+        if (payload && typeof payload === 'string' && payload.trim()) {
+          botManager.updateConfig({ timeKeeperUsername: payload.trim() });
         }
-      });
-      io.emit('init_data', globalPixelData);
-      botManager.broadcastState();
+        break;
+      case 'update_builder_username':
+        botManager.updateBuilderUsername(payload.letterId || payload.id, payload.username);
+        break;
+      case 'set_bot_role':
+        botManager.setBotRole(payload.botId, payload.role);
+        break;
+      case 'start_bot_role':
+        botManager.startBotByRole(payload);
+        break;
+      case 'stop_bot_role':
+        botManager.stopBotByRole(payload);
+        break;
+      case 'delete_bot_account':
+        botManager.deleteBotAccount(payload);
+        break;
+      case 'set_time_keeper':
+        result = botManager.setTimeKeeperBot(payload);
+        break;
+      case 'toggle_auto_night':
+        botManager.updateConfig({ autoManageNight: !!payload });
+        break;
+      case 'add_afk_bot':
+        botManager.addAfkBot(payload);
+        break;
+      case 'remove_afk_bot':
+        botManager.removeAfkBot(payload);
+        break;
+      case 'start_all_bots':
+        botManager.startAllBots();
+        break;
+      case 'stop_all_bots':
+        botManager.stopAllBots();
+        break;
+      case 'toggle_simulation':
+        botManager.toggleSimulation(payload);
+        break;
+      case 'start_all_simulations':
+        botManager.startAllSimulations();
+        break;
+      case 'stop_all_simulations':
+        botManager.stopAllSimulations();
+        break;
+      case 'update_config':
+        botManager.updateConfig(payload);
+        break;
+      case 'reset_progress':
+        await progressManager.resetAllProgress(globalPixelData);
+        if (globalPixelData) {
+          Object.keys(globalPixelData.letters).forEach((id) => {
+            if (botManager.bots[id]) {
+              botManager.bots[id].placedCount = 0;
+              botManager.bots[id].status = 'OFFLINE';
+            }
+          });
+        }
+        botManager.broadcastState();
+        break;
+      default:
+        return res.status(400).json({ error: `Lỗi: Hành động không hợp lệ (${action})` });
     }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`[WEBSOCKET] Client ngắt kết nối: ${socket.id}`);
-  });
+    res.json(result || { success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Nạp dữ liệu pixel ảnh và khởi động HTTP Server
 async function startServer() {
   try {
     await connectDB();
+    if (getIsDBConnected()) {
+      await accountManager.syncWithDB();
+      await shulkerManager.syncWithDB();
+      await configManager.syncWithDB();
+      await progressManager.syncWithDB();
+    }
     console.log('🔄 Đang phân tích file ảnh THẤT NGHIỆP.png...');
     globalPixelData = await pixelEngine.loadPixelData();
+    progressManager.applyProgressToPixelData(globalPixelData);
     console.log(`✅ Phân tích thành công! Tổng cộng: ${globalPixelData.totalPixelsCount.toLocaleString()} pixels cho 10 chữ cái.`);
 
-    botManager.init(io, globalPixelData);
+    botManager.init(null, globalPixelData);
 
     server.listen(PORT, () => {
       console.log(`===================================================`);
-      console.log(`🚀 Web Dashboard server đã chạy trên cổng ${PORT}`);
-      console.log(`🌐 Truy cập local: http://localhost:${PORT}`);
+      console.log(`🚀 Server đã khởi động thành công trên cổng ${PORT} (Chế độ REST API)`);
+      console.log(`🌐 Dashboard: http://localhost:${PORT}`);
       console.log(`☁️ Đã sẵn sàng deploy trực tiếp lên Railway!`);
       console.log(`===================================================`);
     });

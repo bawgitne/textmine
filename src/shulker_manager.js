@@ -26,27 +26,34 @@ class ShulkerManager {
         this.saveDiskData();
       }
 
-      // Sync from MongoDB Atlas
-      if (getIsDBConnected() && ShulkerModel) {
+      await this.syncWithDB();
+    } catch (e) {
+      console.error('Lỗi khi đọc data shulker box:', e.message);
+      this.shulkerBoxes = [];
+    }
+  }
+
+  async syncWithDB() {
+    if (getIsDBConnected() && ShulkerModel) {
+      try {
         const dbShulkers = await ShulkerModel.find({}).lean();
         if (dbShulkers && dbShulkers.length > 0) {
           this.shulkerBoxes = dbShulkers.map(s => ({
             id: s.id,
             letterId: s.letterId || 'GLOBAL',
             name: s.name,
-            blockType: s.blockType || 'black_concrete',
-            pos: s.pos || { x: 0, y: 250, z: 0 },
+            blockType: s.blockType || 'pink_concrete',
+            pos: s.pos || { x: 0, y: 172, z: 0 },
             initialCapacity: s.initialCapacity || SHULKER_SLOT_CAPACITY,
             remainingBlocks: s.remainingBlocks || 0,
             status: s.status || 'AVAILABLE'
           }));
           this.saveDiskData();
-          console.log(`☁️ [MONGODB ATLAS] Đã tải ${this.shulkerBoxes.length} Shulker Boxes từ Cloud Database!`);
+          console.log(`☁️ [MONGODB ATLAS] Đã đồng bộ ${this.shulkerBoxes.length} Shulker Boxes từ Cloud Database!`);
         }
+      } catch (e) {
+        console.error('⚠️ [MONGODB ATLAS ERROR] Lỗi khi sync shulker boxes:', e.message);
       }
-    } catch (e) {
-      console.error('Lỗi khi đọc data shulker box:', e.message);
-      this.shulkerBoxes = [];
     }
   }
 
@@ -73,18 +80,28 @@ class ShulkerManager {
   }
 
   async addShulker(shulkerData) {
+    const existingIdx = this.shulkerBoxes.findIndex(s => 
+      s.id === shulkerData.id || 
+      (s.pos && shulkerData.pos && s.pos.x === shulkerData.pos.x && s.pos.y === shulkerData.pos.y && s.pos.z === shulkerData.pos.z)
+    );
+
     const newShulker = {
       id: shulkerData.id || `shulker_${Date.now()}`,
       letterId: shulkerData.letterId || "GLOBAL",
       name: shulkerData.name || `Rương Shulker ${Date.now()}`,
-      blockType: shulkerData.blockType || "black_concrete",
-      pos: shulkerData.pos || { x: 0, y: 250, z: 0 },
-      initialCapacity: shulkerData.capacity || SHULKER_SLOT_CAPACITY,
-      remainingBlocks: shulkerData.capacity || SHULKER_SLOT_CAPACITY,
-      status: "AVAILABLE"
+      blockType: shulkerData.blockType || 'pink_concrete',
+      pos: shulkerData.pos || { x: 0, y: 172, z: 0 },
+      initialCapacity: shulkerData.capacity || shulkerData.initialCapacity || SHULKER_SLOT_CAPACITY,
+      remainingBlocks: shulkerData.remainingBlocks !== undefined ? shulkerData.remainingBlocks : (shulkerData.capacity || SHULKER_SLOT_CAPACITY),
+      status: shulkerData.status || "AVAILABLE"
     };
 
-    this.shulkerBoxes.push(newShulker);
+    if (existingIdx !== -1) {
+      this.shulkerBoxes[existingIdx] = { ...this.shulkerBoxes[existingIdx], ...newShulker };
+    } else {
+      this.shulkerBoxes.push(newShulker);
+    }
+
     this.saveDiskData();
 
     if (getIsDBConnected() && ShulkerModel) {
@@ -117,6 +134,27 @@ class ShulkerManager {
       return this.shulkerBoxes[idx];
     }
     return null;
+  }
+
+  consumeBlocks(id, amount = 1) {
+    const shulker = this.shulkerBoxes.find(s => s.id === id);
+    if (!shulker) return null;
+
+    const consumed = Math.max(0, Math.floor(Number(amount) || 0));
+    shulker.remainingBlocks = Math.max(0, (Number(shulker.remainingBlocks) || 0) - consumed);
+    shulker.status = shulker.remainingBlocks === 0 ? 'DEPLETED' : 'AVAILABLE';
+    this.saveDiskData();
+
+    // Builder không phải chờ network sau mỗi block; đồng bộ MongoDB chạy nền.
+    if (getIsDBConnected() && ShulkerModel) {
+      ShulkerModel.findOneAndUpdate(
+        { id: shulker.id },
+        { $set: { remainingBlocks: shulker.remainingBlocks, status: shulker.status } },
+        { upsert: false }
+      ).catch(err => console.error('Lỗi cập nhật số block Shulker:', err.message));
+    }
+
+    return shulker;
   }
 
   async removeShulker(id) {

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { AccountModel, getIsDBConnected } = require('./db');
+const { BUILDER_ASSIGNMENTS, getBuilderAssignment } = require('./builder_assignments');
 
 const ACCOUNTS_FILE = path.join(__dirname, '../data/accounts.json');
 
@@ -20,31 +21,72 @@ class AccountManager {
 
       if (fs.existsSync(ACCOUNTS_FILE)) {
         const raw = fs.readFileSync(ACCOUNTS_FILE, 'utf8');
-        this.accounts = JSON.parse(raw) || [];
+        this.accounts = (JSON.parse(raw) || []).map(account => ({
+          ...account,
+          assignedLetterId: getBuilderAssignment(account.username) || account.assignedLetterId || null
+        }));
       } else {
         this.accounts = [];
         this.saveDiskData();
       }
 
-      // 2. Đồng bộ kết nối với MongoDB Atlas Cloud Database (nếu đã kết nối)
-      if (getIsDBConnected() && AccountModel) {
-        const dbAccounts = await AccountModel.find({}).lean();
-        if (dbAccounts && dbAccounts.length > 0) {
-          this.accounts = dbAccounts.map(a => ({
-            id: a.id,
-            username: a.username,
-            password: a.password || '1234',
-            role: a.role || 'AFK_OVERWORLD',
-            authType: a.authType || 'offline',
-            assignedLetterId: a.assignedLetterId || null,
-            bedPos: a.bedPos || null
-          }));
-          this.saveDiskData();
-          console.log(`☁️ [MONGODB ATLAS] Đã tải ${this.accounts.length} bot accounts từ Cloud Database!`);
-        }
-      }
+      await this.syncWithDB();
     } catch (e) {
       console.error('Lỗi khi đọc tài khoản:', e.message);
+    }
+  }
+
+  async syncWithDB() {
+    if (getIsDBConnected() && AccountModel) {
+      try {
+        const dbAccounts = await AccountModel.find({}).lean();
+        if (dbAccounts && dbAccounts.length > 0) {
+          this.accounts = dbAccounts.map(a => {
+            const assigned = getBuilderAssignment(a.username) || a.assignedLetterId || null;
+            return {
+              id: a.id,
+              username: a.username,
+              password: a.password || '1234',
+              role: a.role || 'AFK_OVERWORLD',
+              authType: a.authType || 'offline',
+              assignedLetterId: assigned,
+              bedPos: a.bedPos || null
+            };
+          });
+          this.saveDiskData();
+          console.log(`☁️ [MONGODB ATLAS] Đã đồng bộ ${this.accounts.length} bot accounts từ Cloud Database!`);
+
+          // Tạo account mặc định cho builder nếu còn thiếu trong DB mà không đè role đã cài
+          const fixedBuilderAccounts = await Promise.all(Object.entries(BUILDER_ASSIGNMENTS).map(([username, assignedLetterId]) =>
+            AccountModel.findOneAndUpdate(
+              { username },
+              {
+                $set: { assignedLetterId },
+                $setOnInsert: { id: username, password: '1234', role: 'BUILDER', authType: 'offline' }
+              },
+              { upsert: true, returnDocument: 'after' }
+            )
+          ));
+          fixedBuilderAccounts.forEach(doc => {
+            const account = doc.toObject ? doc.toObject() : doc;
+            const index = this.accounts.findIndex(item => item.username === account.username);
+            const normalized = {
+              id: account.id,
+              username: account.username,
+              password: account.password || '1234',
+              role: account.role || 'BUILDER',
+              authType: account.authType || 'offline',
+              assignedLetterId: getBuilderAssignment(account.username),
+              bedPos: account.bedPos || null
+            };
+            if (index === -1) this.accounts.push(normalized);
+            else this.accounts[index] = { ...this.accounts[index], ...normalized };
+          });
+          this.saveDiskData();
+        }
+      } catch (e) {
+        console.error('⚠️ [MONGODB ATLAS ERROR] Lỗi khi sync accounts:', e.message);
+      }
     }
   }
 
@@ -68,7 +110,7 @@ class AccountManager {
       password: accData.password || '1234',
       role: accData.role || 'AFK_OVERWORLD',
       authType: accData.authType || 'offline',
-      assignedLetterId: accData.assignedLetterId || null,
+      assignedLetterId: getBuilderAssignment(accData.username) || accData.assignedLetterId || null,
       bedPos: accData.bedPos || null
     };
 
@@ -84,7 +126,7 @@ class AccountManager {
     // Lưu MongoDB Atlas Cloud nếu có kết nối
     if (getIsDBConnected() && AccountModel) {
       try {
-        await AccountModel.findOneAndUpdate({ id: newAcc.id }, newAcc, { upsert: true, new: true });
+        await AccountModel.findOneAndUpdate({ id: newAcc.id }, newAcc, { upsert: true, returnDocument: 'after' });
       } catch (err) {
         console.error('⚠️ [MONGODB ATLAS] Lỗi lưu account:', err.message);
       }
