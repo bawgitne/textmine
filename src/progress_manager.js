@@ -38,14 +38,41 @@ class ProgressManager {
         const dbRecords = await ProgressModel.find({}).lean();
         if (dbRecords && dbRecords.length > 0) {
           dbRecords.forEach(rec => {
-            const placedList = rec.placedPixels || [];
+            const dbList = rec.placedPixels || [];
+            const existingItem = this.progressMap[rec.letterId];
+            const existingList = existingItem ? Array.from(existingItem.placedPixels) : [];
+
+            // GỘP (UNION) TIẾN ĐỘ TỪ CẢ MONGODB VÀ FILE CỤC BỘ DƯỚI ĐĨA, KHÔNG BAO GIỜ GHI ĐÈ LÀM MẤT PIXEL!
+            const mergedSet = new Set([...existingList, ...dbList]);
+
+            let count = 0;
+            mergedSet.forEach(val => {
+              if (typeof val === 'string' && (val.startsWith(rec.letterId + '_') || !val.includes('_'))) {
+                count++;
+              }
+            });
+
             this.progressMap[rec.letterId] = {
-              placedPixels: new Set(placedList),
-              placedPixelsCount: rec.placedPixelsCount || placedList.length
+              placedPixels: mergedSet,
+              placedPixelsCount: Math.max(rec.placedPixelsCount || 0, count)
             };
+
+            // Nếu dữ liệu đĩa cục bộ có pixel mới hơn MongoDB, sync ngược lại MongoDB luôn
+            if (mergedSet.size > dbList.length) {
+              ProgressModel.findOneAndUpdate(
+                { letterId: rec.letterId },
+                {
+                  $set: {
+                    placedPixels: Array.from(mergedSet),
+                    placedPixelsCount: this.progressMap[rec.letterId].placedPixelsCount
+                  }
+                },
+                { upsert: true }
+              ).catch(e => console.error(`⚠️ [MONGODB ATLAS ERROR] Lỗi sync ngược DB:`, e.message));
+            }
           });
           this.saveDiskData();
-          console.log(`☁️ [MONGODB ATLAS] Đã đồng bộ tiến độ pixel cho ${dbRecords.length} chữ cái từ Cloud Database!`);
+          console.log(`☁️ [MONGODB ATLAS] Đã đồng bộ & gộp tiến độ pixel cho ${dbRecords.length} chữ cái từ Cloud Database!`);
         }
       } catch (e) {
         console.error('⚠️ [MONGODB ATLAS ERROR] Lỗi khi sync progress:', e.message);
@@ -76,46 +103,44 @@ class ProgressManager {
 
     Object.keys(globalPixelData.letters).forEach(letterId => {
       const letter = globalPixelData.letters[letterId];
+      if (!this.progressMap[letterId]) {
+        this.progressMap[letterId] = {
+          placedPixels: new Set(),
+          placedPixelsCount: 0
+        };
+      }
       const prog = this.progressMap[letterId];
 
-      if (prog && prog.placedPixels) {
-        let count = 0;
+      let count = 0;
+      const newPlacedPixels = new Set(prog.placedPixels || []);
 
-        // Xây dựng Set các vị trí mc_x,mc_z đã đặt
-        const placedCoordSet = new Set();
-        letter.pixels.forEach(p => {
-          if (prog.placedPixels.has(p.id) || prog.placedPixels.has(`${p.mc_x}_${p.mc_z}`)) {
-            placedCoordSet.add(`${p.mc_x}_${p.mc_z}`);
-          }
-        });
-        prog.placedPixels.forEach(idOrCoord => {
-          if (typeof idOrCoord === 'string' && idOrCoord.includes('_') && !idOrCoord.startsWith(letterId)) {
-            placedCoordSet.add(idOrCoord);
-          }
-        });
+      const placedCoordSet = new Set();
+      newPlacedPixels.forEach(idOrCoord => {
+        if (typeof idOrCoord === 'string' && idOrCoord.includes('_')) {
+          placedCoordSet.add(idOrCoord);
+        }
+      });
 
-        const newPlacedPixels = new Set();
+      letter.pixels.forEach(p => {
+        const coordKey = `${p.mc_x}_${p.mc_z}`;
+        if (p.placed || newPlacedPixels.has(p.id) || placedCoordSet.has(coordKey)) {
+          p.placed = true;
+          count++;
+          newPlacedPixels.add(p.id);
+          newPlacedPixels.add(coordKey);
+        }
+      });
 
-        letter.pixels.forEach(p => {
-          const coordKey = `${p.mc_x}_${p.mc_z}`;
-          if (prog.placedPixels.has(p.id) || placedCoordSet.has(coordKey)) {
-            p.placed = true;
-            count++;
-            newPlacedPixels.add(p.id);
-          }
-        });
-
-        letter.placedPixelsCount = count;
-        prog.placedPixels = newPlacedPixels;
-        prog.placedPixelsCount = count;
-      }
+      letter.placedPixelsCount = count;
+      prog.placedPixels = newPlacedPixels;
+      prog.placedPixelsCount = count;
     });
   }
 
   /**
    * Đánh dấu 1 pixel đã được xây dựng thành công
    */
-  recordPixelPlaced(letterId, pixelId) {
+  recordPixelPlaced(letterId, pixelId, coordKey) {
     if (!this.progressMap[letterId]) {
       this.progressMap[letterId] = {
         placedPixels: new Set(),
@@ -124,9 +149,25 @@ class ProgressManager {
     }
 
     const item = this.progressMap[letterId];
-    if (!item.placedPixels.has(pixelId)) {
+    let changed = false;
+
+    if (pixelId && !item.placedPixels.has(pixelId)) {
       item.placedPixels.add(pixelId);
-      item.placedPixelsCount = item.placedPixels.size;
+      changed = true;
+    }
+    if (coordKey && !item.placedPixels.has(coordKey)) {
+      item.placedPixels.add(coordKey);
+      changed = true;
+    }
+
+    if (changed) {
+      let uniquePixelCount = 0;
+      item.placedPixels.forEach(val => {
+        if (typeof val === 'string' && (val.startsWith(letterId + '_') || !val.includes('_'))) {
+          uniquePixelCount++;
+        }
+      });
+      item.placedPixelsCount = Math.max(item.placedPixelsCount, uniquePixelCount);
 
       this.saveDiskData();
 
@@ -134,7 +175,7 @@ class ProgressManager {
         ProgressModel.findOneAndUpdate(
           { letterId: letterId },
           {
-            $addToSet: { placedPixels: pixelId },
+            $addToSet: { placedPixels: { $each: Array.from(item.placedPixels) } },
             $set: { placedPixelsCount: item.placedPixelsCount }
           },
           { upsert: true }

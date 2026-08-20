@@ -356,7 +356,7 @@ class BuilderEngine {
     state.buildCursor = (Number(state.buildCursor) || 0) + 1;
     state.lastPlacedPixel = pixel;
 
-    progressManager.recordPixelPlaced(letter.id, pixel.id);
+    progressManager.recordPixelPlaced(letter.id, pixel.id, `${pixel.mc_x}_${pixel.mc_z}`);
 
     if (consumeBlock && state.shulkerId) this.manager.shulkerManager.consumeBlocks(state.shulkerId, 1);
     this.manager.emitPixelPlaced(letter.id, pixel, letter);
