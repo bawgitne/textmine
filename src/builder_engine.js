@@ -211,7 +211,7 @@ class BuilderEngine {
     return block && block.name !== 'air' && block.name !== 'cave_air' && block.name !== 'void_air' && block.name !== 'water' && block.name !== 'flowing_water' && block.name !== 'lava' && block.type !== 0;
   }
 
-  findReference(bot, target) {
+  findReference(bot, target, state, letter) {
     const candidates = [
       { offset: new vec3(0, -1, 0), face: new vec3(0, 1, 0) },  // Below -> top face
       { offset: new vec3(0, 1, 0),  face: new vec3(0, -1, 0) }, // Above -> bottom face
@@ -220,10 +220,22 @@ class BuilderEngine {
       { offset: new vec3(0, 0, -1), face: new vec3(0, 0, 1) },  // North -> south face
       { offset: new vec3(0, 0, 1),  face: new vec3(0, 0, -1) }   // South -> north face
     ];
+
+    const placedCoordSet = this.getPlacedCoordSet(letter);
+    const bedVec = state || letter ? this.getBedPosition(state, letter) : new vec3(-452, 173, 277);
+
     for (const candidate of candidates) {
       const neighborPos = target.plus(candidate.offset);
-      if (this.isSolidBlock(bot, neighborPos)) {
-        const block = bot.blockAt(neighborPos) || { position: neighborPos, name: 'stone' };
+      const key = `${neighborPos.x}_${neighborPos.y}_${neighborPos.z}`;
+
+      const isSolidWorld = this.isSolidBlock(bot, neighborPos);
+      const isSolidMemory = placedCoordSet.has(key);
+      const isBedPlatform = Math.abs(neighborPos.x - bedVec.x) <= 2 &&
+                            Math.abs(neighborPos.z - bedVec.z) <= 2 &&
+                            Math.abs(neighborPos.y - bedVec.y) <= 1;
+
+      if (isSolidWorld || isSolidMemory || isBedPlatform) {
+        const block = (bot && bot.blockAt && bot.blockAt(neighborPos)) || { position: neighborPos, name: 'black_concrete' };
         if (!block.position) block.position = neighborPos;
         return { block, face: candidate.face };
       }
@@ -262,21 +274,40 @@ class BuilderEngine {
    * Đảm bảo Bot di chuyển lại gần block mục tiêu trong tầm với (<= 3.5m) trước khi đặt
    */
   async ensureWithinReach(bot, targetPos) {
-    if (!bot || !bot.entity || !bot.pathfinder) return false;
-    const dist = bot.entity.position.distanceTo(targetPos);
-    if (dist <= 3.5) return true;
+    if (!bot || !bot.entity) return false;
+    let dist = bot.entity.position.distanceTo(targetPos);
+    if (dist <= 3.8) return true;
 
-    const targetFloor = new vec3(targetPos.x, targetPos.y + 1, targetPos.z);
-    try {
-      const goal = new GoalNear(targetFloor.x, targetFloor.y, targetFloor.z, 2);
-      const navigation = bot.pathfinder.goto(goal);
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('PATH_TIMEOUT')), 8000));
-      await Promise.race([navigation, timeout]);
-      return bot.entity.position.distanceTo(targetPos) <= 4.5;
-    } catch (err) {
-      try { bot.pathfinder.stop(); } catch (e) {}
-      return false;
+    if (bot.pathfinder) {
+      const targetFloor = new vec3(targetPos.x, targetPos.y + 1, targetPos.z);
+      try {
+        const goal = new GoalNear(targetFloor.x, targetFloor.y, targetFloor.z, 2);
+        const navigation = bot.pathfinder.goto(goal);
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('PATH_TIMEOUT')), 8000));
+        await Promise.race([navigation, timeout]);
+      } catch (err) {
+        try { bot.pathfinder.stop(); } catch (e) {}
+      }
     }
+
+    dist = bot.entity.position.distanceTo(targetPos);
+    if (dist <= 4.25) return true;
+
+    try {
+      await bot.lookAt(targetPos.offset(0, 1.6, 0), true);
+      bot.setControlState('forward', true);
+      const startTime = Date.now();
+      while (bot.entity.position.distanceTo(targetPos) > 3.5 && Date.now() - startTime < 1200) {
+        await bot.lookAt(targetPos.offset(0, 1.6, 0), true);
+        await sleep(50);
+      }
+      bot.setControlState('forward', false);
+    } catch (e) {
+      try { bot.setControlState('forward', false); } catch (_) {}
+    }
+
+    dist = bot.entity.position.distanceTo(targetPos);
+    return dist <= 4.5;
   }
 
   markPlaced(botKey, state, letter, pixel, consumeBlock = true) {
@@ -473,22 +504,23 @@ class BuilderEngine {
       return true;
     }
 
-    // Không tạo scaffold ngoài ma trận chữ. Pixel chỉ được đặt khi có mặt tựa thật.
-    const reference = this.findReference(bot, target);
+    // Tích hợp kiểm tra mặt tựa từ MongoDB + Memory + World State
+    const reference = this.findReference(bot, target, state, letter);
 
     if (!reference) return false;
 
     const ready = await this.ensureHoldingBlock(bot, state);
     if (!ready) return false;
 
-    const inReach = await this.ensureWithinReach(bot, reference.block.position);
+    const inReach = await this.ensureWithinReach(bot, reference.block.position || target);
     if (!inReach) return false;
 
     try {
       await bot.placeBlock(reference.block, reference.face);
       return this.waitForSolid(bot, target);
     } catch (e) {
-      return this.isSolidBlock(bot, target);
+      const placedCoordSet = this.getPlacedCoordSet(letter);
+      return this.isSolidBlock(bot, target) || placedCoordSet.has(`${target.x}_${target.y}_${target.z}`);
     }
   }
 
