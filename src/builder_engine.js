@@ -142,6 +142,30 @@ class BuilderEngine {
     return count;
   }
 
+  /**
+   * Quét tất cả các block thực tế đã được xây trong game ở các chunk đang load và tự động đồng bộ lên Web & MongoDB Atlas
+   */
+  scanLoadedChunksForPlacedPixels(botKey, state, letter) {
+    const bot = state ? state.botInstance : null;
+    if (!bot || !letter || !letter.pixels) return;
+
+    const unplaced = letter.pixels.filter(p => !p.placed);
+    let newlyFound = 0;
+
+    for (const pixel of unplaced) {
+      const target = new vec3(pixel.mc_x, pixel.mc_y, pixel.mc_z);
+      if (this.isSolidBlock(bot, target)) {
+        this.markPlaced(botKey, state, letter, pixel, false);
+        newlyFound++;
+      }
+    }
+
+    if (newlyFound > 0) {
+      this.manager.log('info', `🔍 [AUTO SCAN] Bot [${state.username}] phát hiện & đồng bộ ${newlyFound} pixel đã có sẵn trong game lên Web/DB!`);
+      this.manager.broadcastState();
+    }
+  }
+
   nextPixel(state, letter) {
     const bot = state.botInstance;
     const unplaced = letter.pixels.filter(p => {
@@ -192,7 +216,21 @@ class BuilderEngine {
       return connectedCandidates[0].pixel;
     }
 
-    // Nếu không có pixel nào đang đặt được an toàn, dừng chọn thay vì dựng cầu ngoài nét chữ.
+    // 2. Nếu Bot có mặt nhưng chưa tìm thấy pixel nào có mặt tựa hợp lệ, trả về null để không tạo bridge lơ lửng ngoài nét chữ
+    if (bot) {
+      return null;
+    }
+
+    const fallbackCandidates = [];
+    for (const p of unplaced) {
+      const distToBedSq = this.getDistanceSq(p, bedVec);
+      fallbackCandidates.push({ pixel: p, score: distToBedSq });
+    }
+    if (fallbackCandidates.length > 0) {
+      fallbackCandidates.sort((a, b) => a.score - b.score);
+      return fallbackCandidates[0].pixel;
+    }
+
     return null;
   }
 
@@ -604,6 +642,11 @@ class BuilderEngine {
 
     while (this.isCurrent(botKey, generation, state)) {
       const letter = this.getLetter(state);
+      if (letter) {
+        // Đồng bộ tự động tất cả các block thực tế đã được đặt trong game lên Web/DB
+        this.scanLoadedChunksForPlacedPixels(botKey, state, letter);
+      }
+
       const pixel = letter && this.nextPixel(state, letter);
       if (!pixel) {
         const remaining = letter && letter.pixels.some(p => !p.placed);
