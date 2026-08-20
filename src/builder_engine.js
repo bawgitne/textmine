@@ -82,9 +82,66 @@ class BuilderEngine {
   }
 
   /**
-   * THUẬT TOÁN XÂY LAN TỎA TỪ TÂM GIƯỜNG (Connected Center-Out Spreading Algorithm):
-   * Luôn luôn ưu tiên chọn pixel SÁT GIƯỜNG NHẤT (cách 0m - 1m) trước tiên!
+   * THUẬT TOÁN XÂY LAN TỎA LIÊN TỤC (Connected Spreading Algorithm):
+   * ƯU TIÊN TUYỆT ĐỐI chọn pixel nằm KẾ BÊN CÁC BLOCK ĐÃ ĐẶT RỒI!
    */
+  getPlacedCoordSet(letter) {
+    const set = new Set();
+    if (letter && letter.pixels) {
+      for (const p of letter.pixels) {
+        if (p.placed) {
+          set.add(`${p.mc_x}_${p.mc_y}_${p.mc_z}`);
+        }
+      }
+    }
+    if (this.manager && this.manager.pixelData && this.manager.pixelData.letters) {
+      for (const lId of Object.keys(this.manager.pixelData.letters)) {
+        const l = this.manager.pixelData.letters[lId];
+        if (l && l.pixels) {
+          for (const p of l.pixels) {
+            if (p.placed) {
+              set.add(`${p.mc_x}_${p.mc_y}_${p.mc_z}`);
+            }
+          }
+        }
+      }
+    }
+    return set;
+  }
+
+  countPlacedNeighbors(bot, state, letter, pixel, placedCoordSet) {
+    const neighbors = [
+      { x: pixel.mc_x - 1, y: pixel.mc_y,     z: pixel.mc_z },
+      { x: pixel.mc_x + 1, y: pixel.mc_y,     z: pixel.mc_z },
+      { x: pixel.mc_x,     y: pixel.mc_y - 1, z: pixel.mc_z },
+      { x: pixel.mc_x,     y: pixel.mc_y + 1, z: pixel.mc_z },
+      { x: pixel.mc_x,     y: pixel.mc_y,     z: pixel.mc_z - 1 },
+      { x: pixel.mc_x,     y: pixel.mc_y,     z: pixel.mc_z + 1 }
+    ];
+
+    let count = 0;
+    const bedVec = this.getBedPosition(state, letter);
+
+    for (const n of neighbors) {
+      const key = `${n.x}_${n.y}_${n.z}`;
+      if (placedCoordSet.has(key)) {
+        count++;
+        continue;
+      }
+      const nVec = new vec3(n.x, n.y, n.z);
+      if (this.isSolidBlock(bot, nVec)) {
+        count++;
+        placedCoordSet.add(key);
+        continue;
+      }
+      // Gần khu vực Giường / Rương Shulker
+      if (Math.abs(n.x - bedVec.x) <= 2 && Math.abs(n.z - bedVec.z) <= 2 && Math.abs(n.y - bedVec.y) <= 1) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   nextPixel(state, letter) {
     const bot = state.botInstance;
     const unplaced = letter.pixels.filter(p => {
@@ -92,7 +149,7 @@ class BuilderEngine {
       if (bot) {
         const target = new vec3(p.mc_x, p.mc_y, p.mc_z);
         if (this.isBlockedByShulkerOrBed(bot, target)) {
-          this.markPlaced(state.id || letter.id, state, letter, p);
+          this.markPlaced(state.id || letter.id, state, letter, p, false);
           return false;
         }
       }
@@ -102,34 +159,41 @@ class BuilderEngine {
     if (unplaced.length === 0) return null;
 
     const bedVec = this.getBedPosition(state, letter);
+    const lastPos = state.lastPlacedPixel
+      ? new vec3(state.lastPlacedPixel.mc_x, state.lastPlacedPixel.mc_y, state.lastPlacedPixel.mc_z)
+      : bedVec;
     const botVec = (bot && bot.entity && bot.entity.position) ? bot.entity.position : bedVec;
 
-    // 1. Lọc các pixel chưa xây mà ĐÃ CÓ BLOCK ĐỠ KỀ CẠNH (Reference block available)
-    const buildable = [];
+    const placedCoordSet = this.getPlacedCoordSet(letter);
+
+    const connectedCandidates = [];
+
     for (const p of unplaced) {
+      const neighborCount = this.countPlacedNeighbors(bot, state, letter, p, placedCoordSet);
+      const distToLastSq = (p.mc_x - lastPos.x) ** 2 + (p.mc_y - lastPos.y) ** 2 + (p.mc_z - lastPos.z) ** 2;
+      const distToBedSq = this.getDistanceSq(p, bedVec);
+      const distToBotSq = (botVec ? (p.mc_x - botVec.x) ** 2 + (p.mc_z - botVec.z) ** 2 : distToBedSq);
+
       const target = new vec3(p.mc_x, p.mc_y, p.mc_z);
-      const ref = this.findReference(bot, target);
-      if (ref) {
-        const distBotSq = this.getDistanceSq(p, botVec);
-        const distBedSq = this.getDistanceSq(p, bedVec);
-        buildable.push({ pixel: p, score: distBotSq + distBedSq * 0.5 });
+      const reference = bot ? this.findReference(bot, target) : null;
+      if (neighborCount > 0 && (!bot || reference)) {
+        // Ưu tiên pixel có nhiều block kề cạnh (lấp lỗ rỗng) + gần vị trí block vừa đặt gần nhất
+        const score = (10 - Math.min(neighborCount, 6)) * 1000 + distToLastSq * 0.5 + distToBotSq * 0.2;
+        connectedCandidates.push({ pixel: p, score, neighborCount, distToLastSq });
+      } else if (bot && reference) {
+        const score = distToBedSq + distToBotSq * 0.5;
+        connectedCandidates.push({ pixel: p, score: score + 100000, neighborCount: 0, distToLastSq });
       }
     }
 
-    // Ưu tiên 1: Chọn pixel CÓ BLOCK ĐỠ KỀ CẠNH gần Bot/Giường nhất
-    if (buildable.length > 0) {
-      buildable.sort((a, b) => a.score - b.score);
-      return buildable[0].pixel;
+    // 1. ƯU TIÊN TUYỆT ĐỐI chọn pixel KẾ BÊN BLOCK ĐÃ ĐẶT RỒI
+    if (connectedCandidates.length > 0) {
+      connectedCandidates.sort((a, b) => a.score - b.score);
+      return connectedCandidates[0].pixel;
     }
 
-    // Ưu tiên 2: BẮT BUỘC sắp xếp toàn bộ danh sách pixel theo khoảng cách CHÍNH XÁC tới mốc Giường (bedVec)
-    unplaced.sort((a, b) => {
-      const dA = this.getDistanceSq(a, bedVec);
-      const dB = this.getDistanceSq(b, bedVec);
-      return dA - dB;
-    });
-
-    return unplaced[0];
+    // Nếu không có pixel nào đang đặt được an toàn, dừng chọn thay vì dựng cầu ngoài nét chữ.
+    return null;
   }
 
   findBuildItem(bot) {
@@ -141,32 +205,101 @@ class BuilderEngine {
     });
   }
 
+  isSolidBlock(bot, pos) {
+    if (!bot) return false;
+    const block = bot.blockAt(pos);
+    return block && block.name !== 'air' && block.name !== 'cave_air' && block.name !== 'void_air' && block.name !== 'water' && block.name !== 'flowing_water' && block.name !== 'lava' && block.type !== 0;
+  }
+
   findReference(bot, target) {
     const candidates = [
-      { offset: new vec3(0, -1, 0), face: new vec3(0, 1, 0) },
-      { offset: new vec3(-1, 0, 0), face: new vec3(1, 0, 0) },
-      { offset: new vec3(1, 0, 0), face: new vec3(-1, 0, 0) },
-      { offset: new vec3(0, 0, -1), face: new vec3(0, 0, 1) },
-      { offset: new vec3(0, 0, 1), face: new vec3(0, 0, -1) }
+      { offset: new vec3(0, -1, 0), face: new vec3(0, 1, 0) },  // Below -> top face
+      { offset: new vec3(0, 1, 0),  face: new vec3(0, -1, 0) }, // Above -> bottom face
+      { offset: new vec3(-1, 0, 0), face: new vec3(1, 0, 0) },  // West -> east face
+      { offset: new vec3(1, 0, 0),  face: new vec3(-1, 0, 0) }, // East -> west face
+      { offset: new vec3(0, 0, -1), face: new vec3(0, 0, 1) },  // North -> south face
+      { offset: new vec3(0, 0, 1),  face: new vec3(0, 0, -1) }   // South -> north face
     ];
     for (const candidate of candidates) {
-      const block = bot.blockAt(target.plus(candidate.offset));
-      if (block && block.boundingBox === 'block') return { block, face: candidate.face };
+      const neighborPos = target.plus(candidate.offset);
+      if (this.isSolidBlock(bot, neighborPos)) {
+        const block = bot.blockAt(neighborPos) || { position: neighborPos, name: 'stone' };
+        if (!block.position) block.position = neighborPos;
+        return { block, face: candidate.face };
+      }
     }
     return null;
   }
 
-  markPlaced(botKey, state, letter, pixel) {
+  /**
+   * Di chuyển Bot bước từng bước đứng lên trên mặt block đã được đặt
+   */
+  async stepToBlock(bot, solidPos) {
+    if (!bot || !bot.entity || !bot.pathfinder) return;
+    const targetFeet = solidPos.offset(0.5, 1.0, 0.5);
+    if (bot.entity.position.distanceTo(targetFeet) <= 1.2) return;
+
+    try {
+      const goal = new GoalNear(targetFeet.x, targetFeet.y, targetFeet.z, 0.5);
+      await bot.pathfinder.goto(goal);
+    } catch (err) {
+      try {
+        await bot.lookAt(targetFeet.offset(0, 1.6, 0), true);
+        bot.setControlState('forward', true);
+        const startTime = Date.now();
+        while (bot.entity.position.distanceTo(targetFeet) > 0.8 && Date.now() - startTime < 1000) {
+          await bot.lookAt(targetFeet.offset(0, 1.6, 0), true);
+          await sleep(50);
+        }
+        bot.setControlState('forward', false);
+      } catch (e) {
+        try { bot.setControlState('forward', false); } catch (_) {}
+      }
+    }
+  }
+
+  /**
+   * Đảm bảo Bot di chuyển lại gần block mục tiêu trong tầm với (<= 3.5m) trước khi đặt
+   */
+  async ensureWithinReach(bot, targetPos) {
+    if (!bot || !bot.entity || !bot.pathfinder) return false;
+    const dist = bot.entity.position.distanceTo(targetPos);
+    if (dist <= 3.5) return true;
+
+    const targetFloor = new vec3(targetPos.x, targetPos.y + 1, targetPos.z);
+    try {
+      const goal = new GoalNear(targetFloor.x, targetFloor.y, targetFloor.z, 2);
+      const navigation = bot.pathfinder.goto(goal);
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('PATH_TIMEOUT')), 8000));
+      await Promise.race([navigation, timeout]);
+      return bot.entity.position.distanceTo(targetPos) <= 4.5;
+    } catch (err) {
+      try { bot.pathfinder.stop(); } catch (e) {}
+      return false;
+    }
+  }
+
+  markPlaced(botKey, state, letter, pixel, consumeBlock = true) {
     if (pixel.placed) return;
     pixel.placed = true;
     letter.placedPixelsCount++;
     state.placedCount = letter.placedPixelsCount;
-    state.buildCursor++;
+    state.buildCursor = (Number(state.buildCursor) || 0) + 1;
+    state.lastPlacedPixel = pixel;
 
     progressManager.recordPixelPlaced(letter.id, pixel.id);
 
-    if (state.shulkerId) this.manager.shulkerManager.consumeBlocks(state.shulkerId, 1);
+    if (consumeBlock && state.shulkerId) this.manager.shulkerManager.consumeBlocks(state.shulkerId, 1);
     this.manager.emitPixelPlaced(letter.id, pixel, letter);
+  }
+
+  async waitForSolid(bot, target, timeoutMs = 750) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      if (this.isSolidBlock(bot, target)) return true;
+      await sleep(50);
+    }
+    return this.isSolidBlock(bot, target);
   }
 
   /**
@@ -333,52 +466,29 @@ class BuilderEngine {
   }
 
   /**
-   * Tự động bắc cầu (Scaffold/Bridge) từ vị trí đứng của Bot đến pixel lơ lửng (logic chuẩn từ test_bot.js)
+   * Đặt pixel bằng mặt tựa thật; không tạo scaffold ngoài ma trận chữ.
    */
   async placeBlockWithBridge(bot, state, letter, target) {
-    let reference = this.findReference(bot, target);
-
-    if (!reference) {
-      const botFloorPos = bot.entity.position.floored().offset(0, -1, 0);
-      const bridgePath = [];
-
-      const steps = Math.max(Math.abs(target.x - botFloorPos.x), Math.abs(target.z - botFloorPos.z));
-      for (let s = 0; s <= steps; s++) {
-        const bx = Math.round(botFloorPos.x + (target.x - botFloorPos.x) * (s / steps));
-        const bz = Math.round(botFloorPos.z + (target.z - botFloorPos.z) * (s / steps));
-        bridgePath.push(new vec3(bx, target.y, bz));
-      }
-
-      for (const bPos of bridgePath) {
-        const existing = bot.blockAt(bPos);
-        if (existing && existing.name !== 'air' && existing.name !== 'cave_air' && existing.name !== 'void_air' && existing.type !== 0) {
-          continue;
-        }
-
-        const bRef = this.findReference(bot, bPos);
-        if (bRef) {
-          const ready = await this.ensureHoldingBlock(bot, state);
-          if (!ready) return false;
-
-          try {
-            await bot.placeBlock(bRef.block, bRef.face);
-          } catch (e) {}
-        }
-      }
-
-      reference = this.findReference(bot, target);
+    if (this.isSolidBlock(bot, target)) {
+      return true;
     }
+
+    // Không tạo scaffold ngoài ma trận chữ. Pixel chỉ được đặt khi có mặt tựa thật.
+    const reference = this.findReference(bot, target);
 
     if (!reference) return false;
 
     const ready = await this.ensureHoldingBlock(bot, state);
     if (!ready) return false;
 
+    const inReach = await this.ensureWithinReach(bot, reference.block.position);
+    if (!inReach) return false;
+
     try {
       await bot.placeBlock(reference.block, reference.face);
-      return true;
+      return this.waitForSolid(bot, target);
     } catch (e) {
-      return false;
+      return this.isSolidBlock(bot, target);
     }
   }
 
@@ -394,13 +504,12 @@ class BuilderEngine {
       const target = new vec3(pixel.mc_x, pixel.mc_y, pixel.mc_z);
       if (currentFeet.distanceTo(target) <= 3.6) {
         if (this.isBlockedByShulkerOrBed(bot, target)) {
-          this.markPlaced(state.id || letter.id, state, letter, pixel);
+          this.markPlaced(state.id || letter.id, state, letter, pixel, false);
           continue;
         }
 
-        const existing = bot.blockAt(target);
-        if (existing && existing.name !== 'air' && existing.name !== 'cave_air' && existing.name !== 'void_air' && existing.type !== 0) {
-          this.markPlaced(state.id || letter.id, state, letter, pixel);
+        if (this.isSolidBlock(bot, target)) {
+          this.markPlaced(state.id || letter.id, state, letter, pixel, false);
           continue;
         }
 
@@ -411,7 +520,9 @@ class BuilderEngine {
 
           try {
             await bot.placeBlock(ref.block, ref.face);
-            this.markPlaced(state.id || letter.id, state, letter, pixel);
+            if (await this.waitForSolid(bot, target)) {
+              this.markPlaced(state.id || letter.id, state, letter, pixel);
+            }
           } catch (e) {}
         }
       }
@@ -425,7 +536,7 @@ class BuilderEngine {
     // 0. TỰ ĐỘNG SKIP NẾU PIXEL NẰM TRỰC TIẾP DƯỚI HẶC TRÙNG VỊ TRÍ RƯƠNG SHULKER BOX / GIƯỜNG
     if (this.isBlockedByShulkerOrBed(bot, target)) {
       this.manager.log('info', `⏭️ [AUTO SKIP] Bỏ qua pixel (${target.x}, ${target.y}, ${target.z}) vì nằm dưới/trùng Rương Shulker Box hoặc Giường.`);
-      this.markPlaced(botKey, state, letter, pixel);
+      this.markPlaced(botKey, state, letter, pixel, false);
       return;
     }
 
@@ -438,29 +549,12 @@ class BuilderEngine {
     }
 
     // 2. Kiểm tra xem pixel mục tiêu đã được xây sẵn chưa
-    let existing = bot.blockAt(target);
-    if (existing && existing.name !== 'air' && existing.name !== 'cave_air' && existing.name !== 'void_air' && existing.type !== 0) {
-      this.markPlaced(botKey, state, letter, pixel);
+    if (this.isSolidBlock(bot, target)) {
+      this.markPlaced(botKey, state, letter, pixel, false);
       return;
     }
 
-    // 3. Cho bot di chuyển lại gần pixel mục tiêu để xây
-    if (bot.entity.position.distanceTo(target) > 4.25) {
-      state.status = 'MOVING';
-      this.manager.broadcastState();
-      try {
-        await bot.pathfinder.goto(new GoalNear(target.x, target.y, target.z, 3));
-      } catch (e) {}
-    }
-
-    // 4. Kiểm tra lại block tại mục tiêu sau khi đã di chuyển lại gần
-    existing = bot.blockAt(target);
-    if (existing && existing.name !== 'air' && existing.name !== 'cave_air' && existing.name !== 'void_air' && existing.type !== 0) {
-      this.markPlaced(botKey, state, letter, pixel);
-      return;
-    }
-
-    // 5. Sử dụng thuật toán bắc cầu (Scaffolding / Bridging) tự tạo móng nếu pixel lơ lửng
+    // Không pathfind tới tọa độ không khí; chỉ tiến tới block mặt tựa trong placeBlockWithBridge.
     state.status = 'PLACING';
     const success = await this.placeBlockWithBridge(bot, state, letter, target);
     if (success) {
@@ -468,7 +562,7 @@ class BuilderEngine {
       // Đặt dồn các pixel xung quanh trong tầm với 3.6m
       await this.batchPlaceInReach(bot, state, letter);
     } else {
-      throw new Error(`Không thể đặt/bắc cầu đến pixel (${target.x}, ${target.y}, ${target.z})`);
+      throw new Error(`Không thể đặt pixel (${target.x}, ${target.y}, ${target.z}): thiếu mặt tựa hoặc không thể tới trong tầm`);
     }
   }
 
@@ -480,7 +574,11 @@ class BuilderEngine {
       const letter = this.getLetter(state);
       const pixel = letter && this.nextPixel(state, letter);
       if (!pixel) {
-        state.status = 'FINISHED';
+        const remaining = letter && letter.pixels.some(p => !p.placed);
+        state.status = remaining ? 'BLOCKED' : 'FINISHED';
+        if (remaining) {
+          this.manager.log('warning', `[${state.username}] Còn pixel chưa xây nhưng chưa có mặt tựa hợp lệ. Dừng an toàn để không tạo bridge thừa.`);
+        }
         this.manager.broadcastState();
         return;
       }
