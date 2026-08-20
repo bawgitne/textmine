@@ -175,10 +175,10 @@ class BuilderEngine {
       const distToBotSq = (botVec ? (p.mc_x - botVec.x) ** 2 + (p.mc_z - botVec.z) ** 2 : distToBedSq);
 
       const target = new vec3(p.mc_x, p.mc_y, p.mc_z);
-      const reference = bot ? this.findReference(bot, target) : null;
+      const reference = bot ? this.findReference(bot, target, state, letter) : null;
       if (neighborCount > 0 && (!bot || reference)) {
-        // Ưu tiên pixel có nhiều block kề cạnh (lấp lỗ rỗng) + gần vị trí block vừa đặt gần nhất
-        const score = (10 - Math.min(neighborCount, 6)) * 1000 + distToLastSq * 0.5 + distToBotSq * 0.2;
+        // Ưu tiên pixel có nhiều block kề cạnh (lấp lỗ rỗng) + gần vị trí hiện tại của Bot trước
+        const score = (10 - Math.min(neighborCount, 6)) * 1000 + distToBotSq * 1.0 + distToLastSq * 0.2;
         connectedCandidates.push({ pixel: p, score, neighborCount, distToLastSq });
       } else if (bot && reference) {
         const score = distToBedSq + distToBotSq * 0.5;
