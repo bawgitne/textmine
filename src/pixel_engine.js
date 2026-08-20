@@ -34,8 +34,8 @@ function loadPixelData(imagePath = path.join(__dirname, '../THẤT NGHIỆP.png'
             // R <= 10, G <= 10, B <= 10, Alpha > 0
             if (r <= 10 && g <= 10 && b <= 10 && a > 0) {
               const mc_x = Math.round(x - OVERALL_CENTER_X);
-              // Đảo chiều Z (Trục Y của ảnh đảo thành Trục Z Dương của Minecraft: THẤT = +278, NGHIỆP = -338)
-              const mc_z = Math.round(OVERALL_CENTER_Y - y);
+              // Đảo chiều Z để đọc chữ từ trên xuống dưới (y=0 tương ứng với Hướng Bắc -Z)
+              const mc_z = Math.round(y - OVERALL_CENTER_Y);
 
               pixels.push({
                 img_x: x,

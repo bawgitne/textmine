@@ -69,7 +69,7 @@ class ProgressManager {
   }
 
   /**
-   * Áp dụng tiến độ đã lưu vào đối tượng globalPixelData
+   * Áp dụng tiến độ đã lưu vào đối tượng globalPixelData (Hỗ trợ ghép nối theo ID lẫn Tọa độ X, Z khi đảo ma trận)
    */
   applyProgressToPixelData(globalPixelData) {
     if (!globalPixelData || !globalPixelData.letters) return;
@@ -80,13 +80,33 @@ class ProgressManager {
 
       if (prog && prog.placedPixels) {
         let count = 0;
+
+        // Xây dựng Set các vị trí mc_x,mc_z đã đặt
+        const placedCoordSet = new Set();
         letter.pixels.forEach(p => {
-          if (prog.placedPixels.has(p.id)) {
-            p.placed = true;
-            count++;
+          if (prog.placedPixels.has(p.id) || prog.placedPixels.has(`${p.mc_x}_${p.mc_z}`)) {
+            placedCoordSet.add(`${p.mc_x}_${p.mc_z}`);
           }
         });
+        prog.placedPixels.forEach(idOrCoord => {
+          if (typeof idOrCoord === 'string' && idOrCoord.includes('_') && !idOrCoord.startsWith(letterId)) {
+            placedCoordSet.add(idOrCoord);
+          }
+        });
+
+        const newPlacedPixels = new Set();
+
+        letter.pixels.forEach(p => {
+          const coordKey = `${p.mc_x}_${p.mc_z}`;
+          if (prog.placedPixels.has(p.id) || placedCoordSet.has(coordKey)) {
+            p.placed = true;
+            count++;
+            newPlacedPixels.add(p.id);
+          }
+        });
+
         letter.placedPixelsCount = count;
+        prog.placedPixels = newPlacedPixels;
         prog.placedPixelsCount = count;
       }
     });

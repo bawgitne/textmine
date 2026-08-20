@@ -317,19 +317,6 @@ class BotManager {
             const posStr = pos ? `(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)})` : 'chưa rõ';
             this.log('warning', `⚠️ [AFK BOT ${cleanName}] Tại ${posStr} KHÔNG tìm thấy chiếc Giường nào trong bán kính 32m!`);
           }
-
-          if (bot.time) {
-            const timeOfDay = normalizeTime(bot.time.timeOfDay || 0);
-            const isDay = isDayTime(timeOfDay);
-            if (!isDay) {
-              this.log('info', `🌙 [AFK BOT ${cleanName}] Hiện tại đang là BAN ĐÊM (${timeOfDay} ticks). Đang tiến hành đi ngủ qua đêm...`);
-              this.tryBotSleep(bot, cleanName, Date.now());
-            } else {
-              this.log('info', `☀️ [AFK BOT ${cleanName}] Hiện tại đang là BAN NGÀY (${timeOfDay} ticks). Sẵn sàng ngủ khi trời tối.`);
-            }
-          } else {
-            this.tryBotSleep(bot, cleanName, Date.now());
-          }
         }, 2500);
 
         // Anti-AFK: Quay mặt & vẫy tay nhẹ mỗi 20 giây để duy trì kết nối
@@ -597,11 +584,16 @@ class BotManager {
     this.broadcastState();
   }
 
-  // Thử cho một bot đi ngủ nếu phát hiện giường gần đó (bán kính 32m)
+  // Thử cho bot TimeKeeper đi ngủ nếu phát hiện giường gần đó (bán kính 32m)
   async tryBotSleep(bot, username, now) {
+    // CHỈ CHO PHÉP duy nhất TimeManager đi ngủ. Mọi bot khác (Builder / AFK) KHÔNG BAO GIỜ được đi ngủ!
+    if (!this.timeKeeper || username !== this.timeKeeper.username) {
+      return;
+    }
+
     if (!bot || !bot.entity || bot.isSleeping) {
       if (bot && bot.isSleeping) {
-        this.log('info', `😴 [NIGHT] Bot [${username}] đã ở trạng thái ĐANG NGỦ.`);
+        this.log('info', `😴 [NIGHT] Bot TimeKeeper [${username}] đã ở trạng thái ĐANG NGỦ.`);
       }
       return;
     }
@@ -667,11 +659,11 @@ class BotManager {
     this.broadcastState();
   }
 
-  // Khi TimeKeeper phát hiện TRỜI SÁNG: Đánh thức các Bot đang ngủ
+  // Khi TimeKeeper phát hiện TRỜI SÁNG: Đánh thức Bot TimeKeeper
   async handleDayTime() {
-    this.log('success', `☀️ [TIME KEEPER] Trời đã SÁNG! Đánh thức các Bot đang ngủ...`);
+    this.log('success', `☀️ [TIME KEEPER] Trời đã SÁNG! Đánh thức Bot TimeKeeper...`);
 
-    // 1. Đánh thức Bot TimeKeeper nếu đang ngủ
+    // Chỉ đánh thức Bot TimeKeeper nếu đang ngủ
     if (this.timeKeeper.botInstance) {
       this.timeKeeper.botInstance._warnedNoBed = false;
       this.timeKeeper.botInstance._lastSleepAttempt = 0;
@@ -681,22 +673,6 @@ class BotManager {
           this.log('info', `☀️ [DAY] Bot TimeKeeper [${this.timeKeeper.username}] đã thức dậy.`);
         }
       } catch (err) {}
-    }
-
-    // 2. Đánh thức các Bot khác đang ngủ
-    for (const botKey of Object.keys(this.bots)) {
-      const state = this.bots[botKey];
-      if (state && state.botInstance) {
-        state.botInstance._warnedNoBed = false;
-        state.botInstance._lastSleepAttempt = 0;
-        try {
-          if (state.botInstance.isSleeping) {
-            await state.botInstance.wake();
-            state.status = 'ONLINE';
-            this.log('info', `☀️ [DAY] Bot [${state.username}] đã thức dậy.`);
-          }
-        } catch (err) {}
-      }
     }
 
     this.timeKeeper.status = 'MONITORING';

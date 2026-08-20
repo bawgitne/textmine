@@ -1,0 +1,12 @@
+{
+  "host": "cloudy.pikamc.vn",
+  "port": 25311,
+  "version": "1.21.11",
+  "yLevel": 172,
+  "autoBuild": true,
+  "buildBlock": "pink_concrete",
+  "buildDelayMs": 150,
+  "timeKeeperAntiAfkMs": 20000,
+  "timeKeeperUsername": "XinChiDungDi",
+  "autoManageNight": true
+}
