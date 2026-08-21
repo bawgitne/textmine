@@ -253,12 +253,29 @@ class BotManager {
     this.broadcastState();
 
     try {
-      const bot = mineflayer.createBot({
+      const proxyManager = require('./proxy_manager');
+      const botOptions = {
         host: this.config.host,
         port: this.config.port,
         username: cleanName,
-        version: this.config.version || '1.21.11'
-      });
+        version: this.config.version || '1.21.11',
+        connect: (client) => {
+          proxyManager.connectWithRotation(
+            this.config.host,
+            this.config.port,
+            (type, msg) => this.log(type, msg)
+          ).then(({ socket, proxy }) => {
+            if (proxy) {
+              this.log('info', `🌐 [AFK BOT ${cleanName}] Đã tạo đường truyền qua Proxy [${proxy.type.toUpperCase()} ${proxy.host}:${proxy.port}]!`);
+            }
+            client.setSocket(socket);
+          }).catch(err => {
+            client.emit('error', err);
+          });
+        }
+      };
+
+      const bot = mineflayer.createBot(botOptions);
 
       bot.loadPlugin(pathfinder);
       afkState.botInstance = bot;
@@ -462,12 +479,29 @@ class BotManager {
         mcVersion = false;
       }
 
-      const bot = mineflayer.createBot({
+      const proxyManager = require('./proxy_manager');
+      const botOptions = {
         host: this.config.host,
         port: this.config.port,
         username: this.timeKeeper.username,
-        version: mcVersion
-      });
+        version: mcVersion,
+        connect: (client) => {
+          proxyManager.connectWithRotation(
+            this.config.host,
+            this.config.port,
+            (type, msg) => this.log(type, msg)
+          ).then(({ socket, proxy }) => {
+            if (proxy) {
+              this.log('info', `🌐 [TimeKeeper ${this.timeKeeper.username}] Đã tạo đường truyền qua Proxy [${proxy.type.toUpperCase()} ${proxy.host}:${proxy.port}]!`);
+            }
+            client.setSocket(socket);
+          }).catch(err => {
+            client.emit('error', err);
+          });
+        }
+      };
+
+      const bot = mineflayer.createBot(botOptions);
 
 
       this.timeKeeper.botInstance = bot;
@@ -820,12 +854,27 @@ class BotManager {
         mcVersion = '1.21.11';
       }
 
+      const proxyManager = require('./proxy_manager');
       const botOptions = {
         host: this.config.host,
         port: this.config.port,
         username: botState.username,
         version: mcVersion,
-        auth: botState.authType || 'offline'
+        auth: botState.authType || 'offline',
+        connect: (client) => {
+          proxyManager.connectWithRotation(
+            this.config.host,
+            this.config.port,
+            (type, msg) => this.log(type, msg)
+          ).then(({ socket, proxy }) => {
+            if (proxy) {
+              this.log('info', `🌐 [Builder ${botState.username}] Đã tạo đường truyền qua Proxy [${proxy.type.toUpperCase()} ${proxy.host}:${proxy.port}]!`);
+            }
+            client.setSocket(socket);
+          }).catch(err => {
+            client.emit('error', err);
+          });
+        }
       };
 
       if (botState.password && botState.authType === 'microsoft') {

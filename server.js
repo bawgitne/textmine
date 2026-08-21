@@ -9,6 +9,7 @@ const accountManager = require('./src/account_manager');
 const progressManager = require('./src/progress_manager');
 const configManager = require('./src/config_manager');
 const botManager = require('./src/bot_manager');
+const proxyManager = require('./src/proxy_manager');
 
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +42,15 @@ app.get('/api/state', (req, res) => {
 // Route lấy danh sách log hệ thống
 app.get('/api/logs', (req, res) => {
   res.json(botManager.logs || []);
+});
+
+// Route lấy danh sách Proxy xoay từ proxy.md
+app.get('/api/proxies', (req, res) => {
+  res.json({
+    count: proxyManager.proxies.length,
+    currentIndex: proxyManager.currentIndex,
+    proxies: proxyManager.loadProxies()
+  });
 });
 
 // Route API Tài khoản (Accounts)

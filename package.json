@@ -15,6 +15,7 @@
     "mineflayer-pathfinder": "^2.4.5",
     "mongoose": "^9.9.2",
     "pngjs": "^7.0.0",
+    "socks": "^2.8.9",
     "vec3": "^0.1.8"
   }
 }

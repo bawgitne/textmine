@@ -1,8 +1,8 @@
 [
   {
-    "id": "shulker_T1_-451_173_278",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-451, 173, 278)",
+    "id": "shulker_G_-451_173_278",
+    "letterId": "G",
+    "name": "Rương Shulker G (-451, 173, 278)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -451,
@@ -14,9 +14,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-450_173_277",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-450, 173, 277)",
+    "id": "shulker_G_-450_173_277",
+    "letterId": "G",
+    "name": "Rương Shulker G (-450, 173, 277)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -450,
@@ -28,9 +28,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-452_173_276",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-452, 173, 276)",
+    "id": "shulker_G_-452_173_276",
+    "letterId": "G",
+    "name": "Rương Shulker G (-452, 173, 276)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -452,
@@ -38,13 +38,13 @@
       "z": 276
     },
     "initialCapacity": 1728,
-    "remainingBlocks": 730,
+    "remainingBlocks": 1728,
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-450_173_276",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-450, 173, 276)",
+    "id": "shulker_G_-450_173_276",
+    "letterId": "G",
+    "name": "Rương Shulker G (-450, 173, 276)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -450,
@@ -56,9 +56,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-450_173_278",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-450, 173, 278)",
+    "id": "shulker_G_-450_173_278",
+    "letterId": "G",
+    "name": "Rương Shulker G (-450, 173, 278)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -450,
@@ -70,9 +70,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-453_173_277",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-453, 173, 277)",
+    "id": "shulker_G_-453_173_277",
+    "letterId": "G",
+    "name": "Rương Shulker G (-453, 173, 277)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -453,
@@ -84,9 +84,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-451_173_275",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-451, 173, 275)",
+    "id": "shulker_G_-451_173_275",
+    "letterId": "G",
+    "name": "Rương Shulker G (-451, 173, 275)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -451,
@@ -98,9 +98,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-451_173_279",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-451, 173, 279)",
+    "id": "shulker_G_-451_173_279",
+    "letterId": "G",
+    "name": "Rương Shulker G (-451, 173, 279)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -451,
@@ -112,9 +112,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-451_173_277",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-451, 173, 277)",
+    "id": "shulker_G_-451_173_277",
+    "letterId": "G",
+    "name": "Rương Shulker G (-451, 173, 277)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -451,
@@ -126,9 +126,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-451_173_276",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-451, 173, 276)",
+    "id": "shulker_G_-451_173_276",
+    "letterId": "G",
+    "name": "Rương Shulker G (-451, 173, 276)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -451,
@@ -140,9 +140,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-454_173_278",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-454, 173, 278)",
+    "id": "shulker_G_-454_173_278",
+    "letterId": "G",
+    "name": "Rương Shulker G (-454, 173, 278)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -454,
@@ -154,9 +154,9 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-454_173_277",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-454, 173, 277)",
+    "id": "shulker_G_-454_173_277",
+    "letterId": "G",
+    "name": "Rương Shulker G (-454, 173, 277)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -454,
@@ -168,12 +168,82 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-453_173_276",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-453, 173, 276)",
+    "id": "shulker_G_-453_173_276",
+    "letterId": "G",
+    "name": "Rương Shulker G (-453, 173, 276)",
     "blockType": "pink_concrete",
     "pos": {
       "x": -453,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_G_-452_173_279",
+    "letterId": "G",
+    "name": "Rương Shulker G (-452, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_G_-453_173_278",
+    "letterId": "G",
+    "name": "Rương Shulker G (-453, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_G_-452_173_275",
+    "letterId": "G",
+    "name": "Rương Shulker G (-452, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_G_-453_173_275",
+    "letterId": "G",
+    "name": "Rương Shulker G (-453, 173, 275)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 275
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_G_-454_173_276",
+    "letterId": "G",
+    "name": "Rương Shulker G (-454, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
       "y": 173,
       "z": 276
     },
@@ -196,76 +266,6 @@
     "status": "AVAILABLE"
   },
   {
-    "id": "shulker_T1_-453_173_278",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-453, 173, 278)",
-    "blockType": "pink_concrete",
-    "pos": {
-      "x": -453,
-      "y": 173,
-      "z": 278
-    },
-    "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
-  },
-  {
-    "id": "shulker_T1_-452_173_275",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-452, 173, 275)",
-    "blockType": "pink_concrete",
-    "pos": {
-      "x": -452,
-      "y": 173,
-      "z": 275
-    },
-    "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
-  },
-  {
-    "id": "shulker_T1_-453_173_275",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-453, 173, 275)",
-    "blockType": "pink_concrete",
-    "pos": {
-      "x": -453,
-      "y": 173,
-      "z": 275
-    },
-    "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
-  },
-  {
-    "id": "shulker_T1_-454_173_276",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-454, 173, 276)",
-    "blockType": "pink_concrete",
-    "pos": {
-      "x": -454,
-      "y": 173,
-      "z": 276
-    },
-    "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
-  },
-  {
-    "id": "shulker_T1_-452_173_279",
-    "letterId": "T1",
-    "name": "Rương Shulker T1 (-452, 173, 279)",
-    "blockType": "pink_concrete",
-    "pos": {
-      "x": -452,
-      "y": 173,
-      "z": 279
-    },
-    "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
-  },
-  {
     "id": "shulker_T1_-454_173_278",
     "letterId": "T1",
     "name": "Rương Shulker T1 (-454, 173, 278)",
@@ -276,8 +276,8 @@
       "z": 278
     },
     "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
+    "remainingBlocks": 0,
+    "status": "DEPLETED"
   },
   {
     "id": "shulker_T1_-453_173_277",
@@ -318,8 +318,8 @@
       "z": 277
     },
     "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
+    "remainingBlocks": 0,
+    "status": "DEPLETED"
   },
   {
     "id": "shulker_T1_-451_173_278",
@@ -360,7 +360,7 @@
       "z": 278
     },
     "initialCapacity": 1728,
-    "remainingBlocks": 1728,
+    "remainingBlocks": 1211,
     "status": "AVAILABLE"
   },
   {
@@ -374,8 +374,8 @@
       "z": 276
     },
     "initialCapacity": 1728,
-    "remainingBlocks": 1728,
-    "status": "AVAILABLE"
+    "remainingBlocks": 0,
+    "status": "DEPLETED"
   },
   {
     "id": "shulker_T1_-450_173_278",
@@ -1172,7 +1172,7 @@
       "z": 280
     },
     "initialCapacity": 1728,
-    "remainingBlocks": 838,
+    "remainingBlocks": 1728,
     "status": "AVAILABLE"
   },
   {
@@ -1224,6 +1224,90 @@
     "blockType": "pink_concrete",
     "pos": {
       "x": -113,
+      "y": 173,
+      "z": 276
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-422_172_214",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-422, 172, 214)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -422,
+      "y": 172,
+      "z": 214
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-452_173_277",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 277)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 277
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 0,
+    "status": "DEPLETED"
+  },
+  {
+    "id": "shulker_T1_-452_173_278",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-452, 173, 278)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -452,
+      "y": 173,
+      "z": 278
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-453_173_279",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-453, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -453,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_T1_-454_173_279",
+    "letterId": "T1",
+    "name": "Rương Shulker T1 (-454, 173, 279)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -454,
+      "y": 173,
+      "z": 279
+    },
+    "initialCapacity": 1728,
+    "remainingBlocks": 1728,
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "shulker_H1_-114_173_276",
+    "letterId": "H1",
+    "name": "Rương Shulker H1 (-114, 173, 276)",
+    "blockType": "pink_concrete",
+    "pos": {
+      "x": -114,
       "y": 173,
       "z": 276
     },

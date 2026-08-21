@@ -30,7 +30,7 @@
     "id": "ShulkerFarm",
     "username": "ShulkerFarm",
     "password": "1234",
-    "role": "AFK_OVERWORLD",
+    "role": "AFK_NON_OVERWORLD",
     "authType": "offline",
     "assignedLetterId": null,
     "bedPos": null
@@ -39,7 +39,7 @@
     "id": "SandFarm",
     "username": "SandFarm",
     "password": "1234",
-    "role": "AFK_OVERWORLD",
+    "role": "AFK_NON_OVERWORLD",
     "authType": "offline",
     "assignedLetterId": null,
     "bedPos": null
@@ -48,7 +48,7 @@
     "id": "GoldFarm",
     "username": "GoldFarm",
     "password": "1234",
-    "role": "AFK_NON_OVERWORLD",
+    "role": "AFK_OVERWORLD",
     "authType": "offline",
     "assignedLetterId": null,
     "bedPos": null
@@ -70,7 +70,7 @@
     "authType": "offline",
     "assignedLetterId": "T1",
     "bedPos": {
-      "x": -452,
+      "x": -453,
       "y": 173,
       "z": 277
     }
