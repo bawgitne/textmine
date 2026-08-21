@@ -15,8 +15,12 @@ const reverseTunnelServer = require('./src/reverse_tunnel_server');
 const app = express();
 const server = http.createServer(app);
 
-// Railway cấp biến PORT tự động
-const PORT = process.env.PORT || 3000;
+// Tránh xung đột port trên Railway giữa Express Web Dashboard và ESP32 Tunnel Server
+const TUNNEL_PORT = parseInt(process.env.TUNNEL_PORT || '9000', 10);
+let PORT = parseInt(process.env.PORT || '3000', 10);
+if (PORT === TUNNEL_PORT) {
+  PORT = 3000;
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));

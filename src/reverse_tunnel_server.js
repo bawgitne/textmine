@@ -75,6 +75,14 @@ class ReverseTunnelServer {
             });
         });
 
+        this.tunnelServer.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                console.error(`❌ [ESP32 TUNNEL ERROR] Cổng ${this.tunnelPort} đang bị chiếm dụng bởi tiến trình khác! (EADDRINUSE)`);
+            } else {
+                console.error('[ESP32 TUNNEL ERROR]', err.message);
+            }
+        });
+
         this.tunnelServer.listen(this.tunnelPort, '0.0.0.0', () => {
             console.log(`🚀 [ESP32 TUNNEL] Lắng nghe kết nối từ ESP32 tại port ${this.tunnelPort}`);
         });
