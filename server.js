@@ -10,6 +10,7 @@ const progressManager = require('./src/progress_manager');
 const configManager = require('./src/config_manager');
 const botManager = require('./src/bot_manager');
 const proxyManager = require('./src/proxy_manager');
+const reverseTunnelServer = require('./src/reverse_tunnel_server');
 
 const app = express();
 const server = http.createServer(app);
@@ -24,14 +25,20 @@ app.use('/texture', express.static(path.join(__dirname, 'texture')));
 // Biến lưu trữ pixel data nạp từ ảnh
 let globalPixelData = null;
 
-// Route API kiểm tra sức khỏe server & trạng thái DB
+// Route API kiểm tra sức khỏe server & trạng thái DB & trạng thái ESP32 Proxy
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     database: getIsDBConnected() ? 'ONLINE (MongoDB Atlas)' : 'OFFLINE (Local JSON Fallback)',
+    esp32Proxy: reverseTunnelServer.getStatus(),
     uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
+});
+
+// Route lấy trạng thái ESP32 Proxy riêng biệt
+app.get('/api/esp32-status', (req, res) => {
+  res.json(reverseTunnelServer.getStatus());
 });
 
 // Route lấy toàn bộ trạng thái hệ thống
@@ -221,6 +228,9 @@ async function startServer() {
     console.log(`✅ Phân tích thành công! Tổng cộng: ${globalPixelData.totalPixelsCount.toLocaleString()} pixels cho 10 chữ cái.`);
 
     botManager.init(null, globalPixelData);
+
+    // Khởi động Reverse Tunnel Server chờ ESP32 SuperMini ở nhà kết nối
+    reverseTunnelServer.start();
 
     server.listen(PORT, () => {
       console.log(`===================================================`);
